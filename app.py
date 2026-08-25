@@ -1,12 +1,21 @@
 # ============================================================
 # DASHBOARD STREAMLIT
-# Diversità Spaziale Urbana - Bologna
+# DIVERSITÀ SPAZIALE URBANA - BOLOGNA
 #
-# VERSIONE GITHUB - STRUTTURA PIATTA
-# Tutti i file sono nella root del repository
+# VERSIONE FINALE
+# - Repository GitHub con struttura piatta
+# - Logo SBL cliccabile
+# - Barra Streamlit superiore nascosta
+# - Tema chiaro forzato anche con Dark Mode
+# - Palette aziendale
+# - Correzione rendering HTML
 # ============================================================
 
 from pathlib import Path
+from textwrap import dedent
+
+import base64
+import mimetypes
 
 import geopandas as gpd
 import streamlit as st
@@ -33,7 +42,8 @@ ROOT = Path(__file__).resolve().parent
 
 
 # ============================================================
-# 3. FILE NELLA ROOT
+# 3. FILE DEL PROGETTO
+# Tutti nella root del repository GitHub
 # ============================================================
 
 FILE_POI = (
@@ -88,115 +98,506 @@ FILE_DENSITA = (
 
 
 # ============================================================
-# 4. PALETTE AZIENDALE
+# 4. LOGO SBL
+# ============================================================
+#
+# Il codice accetta automaticamente uno di questi nomi.
+# Il file deve trovarsi nella root GitHub.
+# ============================================================
+
+POSSIBILI_LOGHI = [
+    ROOT / "Logo_sbl.png",
+    ROOT / "Logo_SBL.png",
+    ROOT / "logo_sbl.png",
+    ROOT / "logo_SBL.png",
+]
+
+
+FILE_LOGO = next(
+    (
+        file
+        for file in POSSIBILI_LOGHI
+        if file.exists()
+    ),
+    None,
+)
+
+
+# ============================================================
+# 5. PALETTE AZIENDALE
 # ============================================================
 
 BLU = "#00649C"
+BLU_MEDIO = "#2F6E9C"
+
 AZZURRO = "#1C9FE8"
+AZZURRO_CHIARO = "#A5CEEC"
+
 ARANCIONE = "#E8901C"
+ARANCIONE_CHIARO = "#E8B05D"
+
 GRIGIO = "#495B69"
-SFONDO = "#F7F9FB"
+TESTO = "#1F2937"
+
+SFONDO = "#F6F8FA"
+BIANCO = "#FFFFFF"
+BORDO = "#DDE3E8"
 
 
 # ============================================================
-# 5. CSS
+# 6. CSS GENERALE
+# ============================================================
+#
+# Obiettivi:
+#
+# - forza una resa chiara indipendentemente dal tema
+#   selezionato dall'utente;
+# - elimina la toolbar superiore di Streamlit;
+# - mantiene leggibili sidebar, expander e contenuti;
+# - elimina spazio inutile sopra alla dashboard.
 # ============================================================
 
-st.markdown(
+CSS = dedent(
     f"""
     <style>
 
-    .stApp {{
-        background-color: {SFONDO};
+    /* ======================================================
+       FORZA TEMA CHIARO
+       ====================================================== */
+
+    :root {{
+        color-scheme: light !important;
     }}
+
+    html,
+    body,
+    .stApp,
+    [data-testid="stAppViewContainer"],
+    [data-testid="stMain"] {{
+        background-color: {SFONDO} !important;
+        color: {TESTO} !important;
+    }}
+
+
+    /* ======================================================
+       RIMOZIONE BARRA SUPERIORE STREAMLIT
+       ====================================================== */
+
+    [data-testid="stHeader"],
+    [data-testid="stToolbar"],
+    [data-testid="stDecoration"],
+    [data-testid="stStatusWidget"],
+    #MainMenu,
+    footer {{
+        display: none !important;
+        visibility: hidden !important;
+        height: 0 !important;
+    }}
+
+
+    /* ======================================================
+       CONTENITORE PRINCIPALE
+       ====================================================== */
 
     .block-container {{
-        padding-top: 2rem;
-        padding-bottom: 3rem;
-        max-width: 1500px;
+        padding-top: 1.1rem !important;
+        padding-bottom: 2.5rem !important;
+        max-width: 1500px !important;
     }}
 
-    h1, h2, h3 {{
-        color: {BLU};
+
+    /* ======================================================
+       TESTI STREAMLIT
+       ====================================================== */
+
+    [data-testid="stMarkdownContainer"],
+    [data-testid="stMarkdownContainer"] p,
+    [data-testid="stMarkdownContainer"] li,
+    [data-testid="stCaptionContainer"],
+    [data-testid="stWidgetLabel"] {{
+        color: {TESTO} !important;
     }}
+
+    h1,
+    h2,
+    h3,
+    h4 {{
+        color: {TESTO} !important;
+    }}
+
+
+    /* ======================================================
+       SIDEBAR
+       ====================================================== */
 
     [data-testid="stSidebar"] {{
-        background-color: #FFFFFF;
-        border-right: 1px solid #E6E9ED;
+        background-color: {BIANCO} !important;
+        border-right: 1px solid {BORDO} !important;
     }}
 
-    .dashboard-header {{
-        padding: 1.4rem 1.6rem;
-
-        background: linear-gradient(
-            90deg,
-            {BLU},
-            {AZZURRO}
-        );
-
-        border-radius: 12px;
-        margin-bottom: 1.5rem;
+    [data-testid="stSidebarContent"] {{
+        background-color: {BIANCO} !important;
+        padding-top: 1rem !important;
     }}
 
-    .dashboard-header h1 {{
-        color: white;
-        margin: 0;
+    [data-testid="stSidebar"] h1,
+    [data-testid="stSidebar"] h2,
+    [data-testid="stSidebar"] h3,
+    [data-testid="stSidebar"] p,
+    [data-testid="stSidebar"] span,
+    [data-testid="stSidebar"] label {{
+        color: {TESTO} !important;
+    }}
+
+    [data-testid="stSidebar"] hr {{
+        border-color: {BORDO} !important;
+    }}
+
+
+    /* ======================================================
+       HEADER AZIENDALE
+       ====================================================== */
+
+    .sbl-header {{
+        background:
+            linear-gradient(
+                105deg,
+                {BLU} 0%,
+                {AZZURRO} 100%
+            );
+
+        border-radius: 14px;
+        padding: 1.45rem 1.7rem;
+        margin-bottom: 1.55rem;
+    }}
+
+    .sbl-header-title {{
+        color: {BIANCO} !important;
         font-size: 2rem;
+        line-height: 1.15;
+        font-weight: 750;
+        margin: 0;
     }}
 
-    .dashboard-header p {{
-        color: white;
-        margin-top: 0.5rem;
+    .sbl-header-subtitle {{
+        color: {BIANCO} !important;
+        margin-top: 0.55rem;
         margin-bottom: 0;
         font-size: 1rem;
-        opacity: 0.95;
+        line-height: 1.55;
+        opacity: 0.96;
     }}
 
-    .kpi-card {{
-        background-color: white;
-        border-radius: 10px;
-        padding: 1.1rem 1.2rem;
-        border-top: 4px solid {AZZURRO};
-        box-shadow: 0 1px 5px rgba(0,0,0,0.08);
-        min-height: 115px;
+
+    /* ======================================================
+       LOGO SIDEBAR
+       ====================================================== */
+
+    .sbl-logo-container {{
+        display: flex;
+        align-items: center;
+        justify-content: flex-start;
+        margin-bottom: 1.2rem;
     }}
 
-    .kpi-value {{
-        color: {BLU};
-        font-size: 1.9rem;
+    .sbl-logo-container img {{
+        width: 118px;
+        max-width: 70%;
+        height: auto;
+        object-fit: contain;
+    }}
+
+    .sbl-logo-fallback {{
+        display: inline-block;
+        color: {BLU} !important;
         font-weight: 700;
-        margin-bottom: 0.15rem;
-    }}
-
-    .kpi-label {{
-        color: {GRIGIO};
-        font-size: 0.9rem;
-        font-weight: 600;
-    }}
-
-    .section-box {{
-        background-color: white;
-        border-radius: 10px;
-        padding: 1.2rem 1.4rem;
-        border-left: 4px solid {ARANCIONE};
+        font-size: 1.1rem;
+        text-decoration: none;
         margin-bottom: 1rem;
     }}
 
-    .method-box {{
-        background-color: white;
+
+    /* ======================================================
+       KPI
+       ====================================================== */
+
+    .sbl-kpi {{
+        background-color: {BIANCO};
+        border-radius: 11px;
+        border: 1px solid {BORDO};
+        border-top: 4px solid {AZZURRO};
+        padding: 1.05rem 1.1rem;
+        min-height: 112px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.045);
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+    }}
+
+    .sbl-kpi-value {{
+        color: {BLU} !important;
+        font-size: 1.8rem;
+        line-height: 1.1;
+        font-weight: 750;
+        margin-bottom: 0.4rem;
+    }}
+
+    .sbl-kpi-label {{
+        color: {GRIGIO} !important;
+        font-size: 0.90rem;
+        line-height: 1.3;
+        font-weight: 600;
+    }}
+
+
+    /* ======================================================
+       BOX INFORMATIVI
+       ====================================================== */
+
+    .sbl-info {{
+        background-color: {BIANCO};
+        border: 1px solid {BORDO};
+        border-left: 5px solid {ARANCIONE};
+        border-radius: 11px;
+        padding: 1.15rem 1.35rem;
+        margin-top: 0.5rem;
+        margin-bottom: 1.2rem;
+        color: {TESTO} !important;
+    }}
+
+    .sbl-info p {{
+        color: {TESTO} !important;
+        margin-bottom: 0.5rem;
+    }}
+
+    .sbl-method {{
+        background-color: {BIANCO};
+        border: 1px solid {BORDO};
+        border-left: 5px solid {BLU};
+        border-radius: 11px;
+        padding: 1.25rem 1.4rem;
+        margin-bottom: 1rem;
+        color: {TESTO} !important;
+    }}
+
+    .sbl-method p {{
+        color: {TESTO} !important;
+    }}
+
+
+    /* ======================================================
+       EXPANDER
+       ====================================================== */
+
+    [data-testid="stExpander"] {{
+        background-color: {BIANCO} !important;
+        border: 1px solid {BORDO} !important;
+        border-radius: 9px !important;
+        overflow: hidden;
+    }}
+
+    [data-testid="stExpander"] summary {{
+        background-color: {BIANCO} !important;
+        color: {TESTO} !important;
+    }}
+
+    [data-testid="stExpander"] summary span,
+    [data-testid="stExpander"] p,
+    [data-testid="stExpander"] li,
+    [data-testid="stExpander"] strong {{
+        color: {TESTO} !important;
+    }}
+
+
+    /* ======================================================
+       TABELLA QUARTIERI
+       ====================================================== */
+
+    .sbl-table-wrap {{
+        width: 100%;
+        overflow-x: auto;
+        background: {BIANCO};
+        border: 1px solid {BORDO};
         border-radius: 10px;
-        padding: 1.3rem 1.5rem;
-        border-left: 4px solid {BLU};
+        margin-bottom: 1.2rem;
+    }}
+
+    .sbl-table {{
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.92rem;
+        color: {TESTO};
+    }}
+
+    .sbl-table th {{
+        background-color: {BLU};
+        color: {BIANCO};
+        padding: 0.8rem 0.75rem;
+        text-align: left;
+        white-space: nowrap;
+    }}
+
+    .sbl-table td {{
+        padding: 0.72rem 0.75rem;
+        border-bottom: 1px solid {BORDO};
+        color: {TESTO};
+        background-color: {BIANCO};
+        white-space: nowrap;
+    }}
+
+    .sbl-table tr:last-child td {{
+        border-bottom: 0;
+    }}
+
+    .sbl-table tbody tr:hover td {{
+        background-color: #F0F7FB;
+    }}
+
+
+    /* ======================================================
+       IMMAGINI
+       ====================================================== */
+
+    [data-testid="stImage"] {{
+        background-color: {BIANCO} !important;
+        border-radius: 10px;
+    }}
+
+
+    /* ======================================================
+       RADIO SIDEBAR
+       ====================================================== */
+
+    [data-testid="stRadio"] {{
+        color: {TESTO} !important;
+    }}
+
+    [data-testid="stRadio"] label {{
+        color: {TESTO} !important;
+    }}
+
+
+    /* ======================================================
+       LINK
+       ====================================================== */
+
+    a {{
+        color: {BLU};
+    }}
+
+
+    /* ======================================================
+       MOBILE
+       ====================================================== */
+
+    @media (max-width: 800px) {{
+
+        .sbl-header-title {{
+            font-size: 1.55rem;
+        }}
+
+        .block-container {{
+            padding-left: 1rem !important;
+            padding-right: 1rem !important;
+        }}
+
     }}
 
     </style>
-    """,
+    """
+)
+
+
+st.markdown(
+    CSS,
     unsafe_allow_html=True,
 )
 
 
 # ============================================================
-# 6. CONTROLLO FILE NECESSARI
+# 7. FUNZIONE PER CONVERTIRE IL LOGO IN BASE64
+# ============================================================
+
+def immagine_base64(
+    file_path: Path,
+):
+
+    mime_type, _ = (
+        mimetypes.guess_type(
+            str(file_path)
+        )
+    )
+
+    if mime_type is None:
+        mime_type = "image/png"
+
+    encoded = (
+        base64.b64encode(
+            file_path.read_bytes()
+        )
+        .decode("utf-8")
+    )
+
+    return (
+        f"data:{mime_type};base64,"
+        f"{encoded}"
+    )
+
+
+# ============================================================
+# 8. LOGO SBL CLICCABILE
+# ============================================================
+
+if FILE_LOGO is not None:
+
+    logo_src = (
+        immagine_base64(
+            FILE_LOGO
+        )
+    )
+
+    logo_html = dedent(
+        f"""
+        <div class="sbl-logo-container">
+            <a
+                href="https://www.sblconsultancy.it/"
+                target="_blank"
+                rel="noopener noreferrer"
+                title="SBL Consultancy"
+            >
+                <img
+                    src="{logo_src}"
+                    alt="SBL Consultancy"
+                >
+            </a>
+        </div>
+        """
+    )
+
+else:
+
+    logo_html = dedent(
+        f"""
+        <a
+            class="sbl-logo-fallback"
+            href="https://www.sblconsultancy.it/"
+            target="_blank"
+            rel="noopener noreferrer"
+        >
+            SBL Consultancy
+        </a>
+        """
+    )
+
+
+st.sidebar.markdown(
+    logo_html,
+    unsafe_allow_html=True,
+)
+
+
+# ============================================================
+# 9. CONTROLLO FILE NECESSARI
 # ============================================================
 
 FILE_NECESSARI = [
@@ -228,19 +629,7 @@ if file_mancanti:
     )
 
     st.write(
-        "File trovati nella root del repository:"
-    )
-
-    for file in sorted(ROOT.iterdir()):
-
-        if file.is_file():
-
-            st.code(
-                file.name
-            )
-
-    st.write(
-        "File necessari mancanti:"
+        "File mancanti:"
     )
 
     for file in file_mancanti:
@@ -253,7 +642,7 @@ if file_mancanti:
 
 
 # ============================================================
-# 7. LETTURA DATI CON CACHE
+# 10. LETTURA DATI
 # ============================================================
 
 @st.cache_data(
@@ -301,13 +690,16 @@ with st.spinner(
 ):
 
     poi = carica_poi()
+
     griglia = carica_griglia()
+
     lisa = carica_lisa()
+
     quartieri = carica_quartieri()
 
 
 # ============================================================
-# 8. KPI
+# 11. KPI
 # ============================================================
 
 n_poi = len(poi)
@@ -327,32 +719,36 @@ n_celle_lisa = len(lisa)
 
 
 # ============================================================
-# 9. HEADER
+# 12. HEADER
 # ============================================================
 
-st.markdown(
+header_html = dedent(
     """
-    <div class="dashboard-header">
+    <div class="sbl-header">
 
-        <h1>
+        <div class="sbl-header-title">
             Diversità Spaziale Urbana – Bologna
-        </h1>
+        </div>
 
-        <p>
+        <div class="sbl-header-subtitle">
             Analisi della mixité funzionale urbana
             attraverso Points of Interest,
-            indici di diversità e
-            autocorrelazione spaziale.
-        </p>
+            indici di diversità e autocorrelazione spaziale.
+        </div>
 
     </div>
-    """,
+    """
+)
+
+
+st.markdown(
+    header_html,
     unsafe_allow_html=True,
 )
 
 
 # ============================================================
-# 10. SIDEBAR
+# 13. NAVIGAZIONE
 # ============================================================
 
 st.sidebar.title(
@@ -384,7 +780,7 @@ st.sidebar.caption(
 
 
 # ============================================================
-# 11. FUNZIONE KPI
+# 14. FUNZIONE KPI
 # ============================================================
 
 def mostra_kpi(
@@ -392,26 +788,30 @@ def mostra_kpi(
     etichetta,
 ):
 
-    st.markdown(
+    html = dedent(
         f"""
-        <div class="kpi-card">
+        <div class="sbl-kpi">
 
-            <div class="kpi-value">
+            <div class="sbl-kpi-value">
                 {valore}
             </div>
 
-            <div class="kpi-label">
+            <div class="sbl-kpi-label">
                 {etichetta}
             </div>
 
         </div>
-        """,
+        """
+    )
+
+    st.markdown(
+        html,
         unsafe_allow_html=True,
     )
 
 
 # ============================================================
-# 12. PANORAMICA
+# 15. PANORAMICA
 # ============================================================
 
 if pagina == "Panoramica":
@@ -440,7 +840,7 @@ if pagina == "Panoramica":
     with c2:
 
         mostra_kpi(
-            n_celle,
+            f"{n_celle}",
             "Celle della griglia",
         )
 
@@ -448,7 +848,7 @@ if pagina == "Panoramica":
     with c3:
 
         mostra_kpi(
-            n_quartieri,
+            f"{n_quartieri}",
             "Quartieri",
         )
 
@@ -456,7 +856,7 @@ if pagina == "Panoramica":
     with c4:
 
         mostra_kpi(
-            n_categorie,
+            f"{n_categorie}",
             "Categorie funzionali",
         )
 
@@ -488,7 +888,7 @@ if pagina == "Panoramica":
     with c7:
 
         mostra_kpi(
-            n_celle_lisa,
+            f"{n_celle_lisa}",
             "Celle Moran/LISA",
         )
 
@@ -496,30 +896,38 @@ if pagina == "Panoramica":
     st.write("")
 
 
-    st.markdown(
+    info_html = dedent(
         """
-        <div class="section-box">
+        <div class="sbl-info">
 
-        <b>Indicatore principale:
-        Indice di Shannon.</b>
+            <p>
+                <strong>
+                    Indicatore principale:
+                    Indice di Shannon.
+                </strong>
+            </p>
 
-        <br><br>
+            <p>
+                La diversità funzionale viene
+                misurata sulla distribuzione
+                di otto categorie di POI.
+            </p>
 
-        La diversità funzionale viene misurata
-        sulla distribuzione di otto categorie
-        di POI.
-
-        Valori di Shannon più elevati indicano
-        una composizione funzionale
-        maggiormente equilibrata.
+            <p>
+                Valori di Shannon più elevati
+                indicano una composizione funzionale
+                maggiormente equilibrata.
+            </p>
 
         </div>
-        """,
-        unsafe_allow_html=True,
+        """
     )
 
 
-    st.write("")
+    st.markdown(
+        info_html,
+        unsafe_allow_html=True,
+    )
 
 
     g1, g2 = st.columns(2)
@@ -552,7 +960,7 @@ if pagina == "Panoramica":
 
 
 # ============================================================
-# 13. MAPPA
+# 16. MAPPA INTERATTIVA
 # ============================================================
 
 elif pagina == "Mappa interattiva":
@@ -563,9 +971,9 @@ elif pagina == "Mappa interattiva":
 
 
     st.caption(
-        "Attiva o disattiva i layer della "
-        "griglia, dei quartieri e delle "
-        "otto categorie POI."
+        "Attiva o disattiva i layer "
+        "della griglia, dei quartieri "
+        "e delle otto categorie POI."
     )
 
 
@@ -585,7 +993,7 @@ elif pagina == "Mappa interattiva":
 
 
 # ============================================================
-# 14. QUARTIERI
+# 17. QUARTIERI
 # ============================================================
 
 elif pagina == "Quartieri":
@@ -618,6 +1026,95 @@ elif pagina == "Quartieri":
     )
 
 
+    # --------------------------------------------------------
+    # Formattazione leggibile
+    # --------------------------------------------------------
+
+    tabella["n_poi"] = (
+        tabella["n_poi"]
+        .astype(int)
+        .map(
+            lambda x:
+            f"{x:,}".replace(
+                ",",
+                "."
+            )
+        )
+    )
+
+
+    tabella["shannon"] = (
+        tabella["shannon"]
+        .map(
+            lambda x:
+            f"{x:.4f}".replace(
+                ".",
+                ","
+            )
+        )
+    )
+
+
+    tabella[
+        "simpson_dominance"
+    ] = (
+        tabella[
+            "simpson_dominance"
+        ]
+        .map(
+            lambda x:
+            f"{x:.4f}".replace(
+                ".",
+                ","
+            )
+        )
+    )
+
+
+    tabella["ricchezza"] = (
+        tabella["ricchezza"]
+        .astype(int)
+    )
+
+
+    tabella["residenti"] = (
+        tabella["residenti"]
+        .astype(int)
+        .map(
+            lambda x:
+            f"{x:,}".replace(
+                ",",
+                "."
+            )
+        )
+    )
+
+
+    tabella[
+        "densita_ab_kmq"
+    ] = (
+        tabella[
+            "densita_ab_kmq"
+        ]
+        .map(
+            lambda x:
+            f"{x:,.1f}"
+            .replace(
+                ",",
+                "X"
+            )
+            .replace(
+                ".",
+                ","
+            )
+            .replace(
+                "X",
+                "."
+            )
+        )
+    )
+
+
     tabella = tabella.rename(
         columns={
             "quartiere":
@@ -644,40 +1141,24 @@ elif pagina == "Quartieri":
     )
 
 
-    tabella["Shannon"] = (
-        tabella["Shannon"]
-        .round(4)
+    tabella_html = (
+        tabella.to_html(
+            index=False,
+            classes="sbl-table",
+            border=0,
+            escape=True,
+        )
     )
 
 
-    tabella[
-        "Simpson dominance"
-    ] = (
-        tabella[
-            "Simpson dominance"
-        ]
-        .round(4)
+    st.markdown(
+        (
+            '<div class="sbl-table-wrap">'
+            + tabella_html
+            + "</div>"
+        ),
+        unsafe_allow_html=True,
     )
-
-
-    tabella[
-        "Densità ab./km²"
-    ] = (
-        tabella[
-            "Densità ab./km²"
-        ]
-        .round(1)
-    )
-
-
-    st.dataframe(
-        tabella,
-        use_container_width=True,
-        hide_index=True,
-    )
-
-
-    st.write("")
 
 
     g1, g2 = st.columns(2)
@@ -710,7 +1191,7 @@ elif pagina == "Quartieri":
 
 
 # ============================================================
-# 15. GRAFICI
+# 18. GRAFICI ESPLORATIVI
 # ============================================================
 
 elif pagina == "Grafici esplorativi":
@@ -728,7 +1209,8 @@ elif pagina == "Grafici esplorativi":
         st.image(
             str(FILE_SHANNON),
             caption=(
-                "Distribuzione Shannon"
+                "Distribuzione dell'indice "
+                "di Shannon"
             ),
             use_container_width=True,
         )
@@ -739,8 +1221,8 @@ elif pagina == "Grafici esplorativi":
         st.image(
             str(FILE_SIMPSON),
             caption=(
-                "Distribuzione "
-                "Simpson dominance"
+                "Distribuzione dell'indice "
+                "di Simpson (dominanza)"
             ),
             use_container_width=True,
         )
@@ -768,7 +1250,8 @@ elif pagina == "Grafici esplorativi":
                 FILE_QUARTIERI_SHANNON
             ),
             caption=(
-                "Shannon per quartiere"
+                "Diversità funzionale "
+                "per quartiere"
             ),
             use_container_width=True,
         )
@@ -778,15 +1261,15 @@ elif pagina == "Grafici esplorativi":
         str(FILE_DENSITA),
         caption=(
             "Relazione esplorativa tra "
-            "diversità funzionale e "
-            "densità abitativa"
+            "diversità funzionale "
+            "e densità abitativa"
         ),
         use_container_width=True,
     )
 
 
 # ============================================================
-# 16. METODOLOGIA
+# 19. METODOLOGIA
 # ============================================================
 
 elif pagina == "Metodologia":
@@ -796,24 +1279,42 @@ elif pagina == "Metodologia":
     )
 
 
-    st.markdown(
+    metodo_html = dedent(
         """
-        <div class="method-box">
+        <div class="sbl-method">
 
-        Il progetto misura la diversità
-        funzionale urbana nel Comune di Bologna
-        attraverso la distribuzione spaziale
-        dei <b>Points of Interest (POI)</b>.
+            <p>
+                Il progetto misura la
+                <strong>
+                    diversità funzionale urbana
+                </strong>
+                nel Comune di Bologna attraverso
+                la distribuzione spaziale dei
+                <strong>
+                    Points of Interest (POI)
+                </strong>.
+            </p>
 
-        <br><br>
-
-        L'impostazione costituisce un
-        <b>adattamento dell'approccio concettuale
-        del progetto spatial_diversity
-        dell'Università di Saragozza</b>.
+            <p>
+                L'impostazione costituisce un
+                <strong>
+                    adattamento dell'approccio
+                    concettuale del progetto
+                    spatial_diversity
+                    dell'Università di Saragozza
+                </strong>
+                agli obiettivi specifici
+                dell'analisi di Bologna e alla
+                disponibilità di dati aperti.
+            </p>
 
         </div>
-        """,
+        """
+    )
+
+
+    st.markdown(
+        metodo_html,
         unsafe_allow_html=True,
     )
 
@@ -825,20 +1326,18 @@ elif pagina == "Metodologia":
 
         st.markdown(
             """
-            **Fonte POI:** OpenStreetMap /
-            Geofabrik.
+**Fonte dei POI:** OpenStreetMap, tramite snapshot Geofabrik.
 
-            **7.975 POI** classificati in
-            otto categorie:
+Il dataset finale comprende **7.975 POI**, classificati nelle otto categorie funzionali previste:
 
-            - commercio
-            - ristorazione
-            - servizi alla persona
-            - istruzione
-            - sanità
-            - cultura
-            - trasporti
-            - servizi pubblici
+- commercio
+- ristorazione
+- servizi alla persona
+- istruzione
+- sanità
+- cultura
+- trasporti
+- servizi pubblici
             """
         )
 
@@ -849,23 +1348,29 @@ elif pagina == "Metodologia":
 
         st.markdown(
             """
-            Griglia adattiva con celle di:
+L'analisi locale utilizza una griglia adattiva con celle di:
 
-            - 250 m
-            - 500 m
-            - 1.000 m
+- **250 m**
+- **500 m**
+- **1.000 m**
 
-            **Shannon**
+Le dimensioni vengono adattate alla densità osservata dei POI.
 
-            H = - Σ pᵢ ln(pᵢ)
+**Indice di Shannon**
 
-            **Simpson dominance**
+`H = - Σ pᵢ ln(pᵢ)`
 
-            D = Σ pᵢ²
+È l'indicatore principale di diversità funzionale.
 
-            **Ricchezza categoriale**
+**Simpson dominance**
 
-            Numero delle categorie presenti.
+`D = Σ pᵢ²`
+
+Misura la dominanza delle categorie.
+
+**Ricchezza categoriale**
+
+Numero delle categorie funzionali presenti nell'unità spaziale.
             """
         )
 
@@ -876,15 +1381,16 @@ elif pagina == "Metodologia":
 
         st.markdown(
             """
-            - 481 celle analizzate
-            - contiguità Queen
-            - 999 permutazioni
-            - seed = 42
-            - Moran's I = 0,2250
-            - p-value = 0,0010
+L'analisi viene effettuata sulle **481 celle con Shannon definito**.
 
-            LISA distingue i cluster
-            HH, LL, HL e LH.
+- contiguità Queen
+- pesi standardizzati per riga
+- 999 permutazioni
+- seed = 42
+- Moran's I = **0,2250**
+- p-value = **0,0010**
+
+L'analisi LISA distingue i cluster locali **HH, LL, HL e LH**.
             """
         )
 
@@ -895,14 +1401,14 @@ elif pagina == "Metodologia":
 
         st.markdown(
             """
-            L'analisi territoriale comprende
-            i **6 quartieri ufficiali di Bologna**.
+L'analisi territoriale comprende i **6 quartieri ufficiali di Bologna**.
 
-            **7.970 POI** ricadono all'interno
-            dei quartieri.
+Gli indicatori vengono ricalcolati direttamente sulla distribuzione delle categorie POI del quartiere e non come media degli Shannon delle celle.
 
-            I restanti **5 POI** rimangono
-            nell'analisi a griglia.
+Dei **7.975 POI** complessivi:
+
+- **7.970** ricadono nei quartieri ufficiali;
+- **5** restano nell'analisi a griglia e non vengono assegnati artificialmente a un quartiere.
             """
         )
 
@@ -913,23 +1419,42 @@ elif pagina == "Metodologia":
 
         st.markdown(
             """
-            Anno di riferimento:
-            **2024**
+Anno di riferimento: **2024**
 
-            Residenti nei sei quartieri:
-            **392.044**
+Residenti attribuiti ai sei quartieri:
 
-            Senza fissa dimora:
-            **747**
+**392.044**
 
-            Totale riconciliato:
-            **392.791**
+Residenti senza fissa dimora:
+
+**747**
+
+Totale riconciliato del Comune di Bologna:
+
+**392.791 residenti**
+
+La densità abitativa è calcolata come residenti per km².
+            """
+        )
+
+
+    with st.expander(
+        "Riferimento a spatial_diversity"
+    ):
+
+        st.markdown(
+            """
+Il progetto di Bologna costituisce un **adattamento concettuale** del progetto *spatial_diversity* dell'Università di Saragozza.
+
+Il principio condiviso è la misurazione dell'eterogeneità funzionale attraverso le quote relative delle diverse funzioni e l'utilizzo di indici di diversità.
+
+L'applicazione di Bologna utilizza tuttavia POI e unità spaziali a griglia/quartiere, mentre il progetto originale di Saragozza utilizza principalmente informazioni catastali e superfici associate agli usi immobiliari.
             """
         )
 
 
 # ============================================================
-# 17. FOOTER
+# 20. FOOTER
 # ============================================================
 
 st.markdown("---")
