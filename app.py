@@ -15,10 +15,13 @@
 # ============================================================
 
 from pathlib import Path
+from io import BytesIO
 
 import geopandas as gpd
 import streamlit as st
 import streamlit.components.v1 as components
+
+from PIL import Image, ImageFilter, ImageEnhance
 
 
 # ============================================================
@@ -97,7 +100,7 @@ FILE_DENSITA = (
 
 
 # ============================================================
-# 4. LOGO SBL
+# 4. LOGO SBL - VERSIONE ALTA DEFINIZIONE
 # ============================================================
 
 NOMI_LOGO = [
@@ -125,6 +128,175 @@ for nome in NOMI_LOGO:
 URL_SBL = (
     "https://www.sblconsultancy.it/"
 )
+
+
+# ============================================================
+# PREPARAZIONE LOGO AD ALTA DEFINIZIONE
+# ============================================================
+#
+# Il PNG originale viene:
+#
+# 1. aperto alla risoluzione originale;
+# 2. ingrandito internamente almeno a 1400 px;
+# 3. ricampionato con LANCZOS;
+# 4. leggermente contrastato;
+# 5. sottoposto a Unsharp Mask;
+# 6. inviato a Streamlit come PNG ad alta risoluzione.
+#
+# Viene poi visualizzato più piccolo:
+# il downsampling del browser produce bordi e testo
+# sensibilmente più nitidi.
+# ============================================================
+
+@st.cache_data(
+    show_spinner=False
+)
+def prepara_logo_hd(
+    percorso_logo: str,
+):
+
+    with Image.open(
+        percorso_logo
+    ) as immagine:
+
+        immagine = (
+            immagine
+            .convert("RGBA")
+        )
+
+
+        # ----------------------------------------------------
+        # Dimensioni originali
+        # ----------------------------------------------------
+
+        larghezza_originale = (
+            immagine.width
+        )
+
+        altezza_originale = (
+            immagine.height
+        )
+
+
+        # ----------------------------------------------------
+        # Risoluzione interna minima
+        # ----------------------------------------------------
+        #
+        # 1400 px garantiscono un'immagine sorgente
+        # molto più grande della dimensione visualizzata.
+        # ----------------------------------------------------
+
+        larghezza_target = max(
+            larghezza_originale,
+            1400,
+        )
+
+
+        rapporto = (
+            larghezza_target
+            / larghezza_originale
+        )
+
+
+        altezza_target = int(
+            round(
+                altezza_originale
+                * rapporto
+            )
+        )
+
+
+        # ----------------------------------------------------
+        # Upscaling LANCZOS
+        # ----------------------------------------------------
+
+        if (
+            larghezza_target
+            != larghezza_originale
+        ):
+
+            immagine = (
+                immagine.resize(
+                    (
+                        larghezza_target,
+                        altezza_target,
+                    ),
+                    Image.Resampling.LANCZOS,
+                )
+            )
+
+
+        # ----------------------------------------------------
+        # Micro-aumento contrasto
+        # ----------------------------------------------------
+        #
+        # Molto contenuto per non alterare
+        # i colori aziendali.
+        # ----------------------------------------------------
+
+        immagine = (
+            ImageEnhance
+            .Contrast(
+                immagine
+            )
+            .enhance(
+                1.04
+            )
+        )
+
+
+        # ----------------------------------------------------
+        # Sharpening
+        # ----------------------------------------------------
+        #
+        # Unsharp Mask abbastanza delicata:
+        # migliora bordi e scritte senza creare
+        # evidenti aloni artificiali.
+        # ----------------------------------------------------
+
+        immagine = (
+            immagine.filter(
+                ImageFilter.UnsharpMask(
+                    radius=2.0,
+                    percent=145,
+                    threshold=2,
+                )
+            )
+        )
+
+
+        # ----------------------------------------------------
+        # Piccolo incremento finale della nitidezza
+        # ----------------------------------------------------
+
+        immagine = (
+            ImageEnhance
+            .Sharpness(
+                immagine
+            )
+            .enhance(
+                1.12
+            )
+        )
+
+
+        # ----------------------------------------------------
+        # Esportazione PNG in memoria
+        # ----------------------------------------------------
+
+        buffer = BytesIO()
+
+
+        immagine.save(
+            buffer,
+            format="PNG",
+            optimize=False,
+        )
+
+
+        return (
+            buffer.getvalue()
+        )
 
 
 # ============================================================
