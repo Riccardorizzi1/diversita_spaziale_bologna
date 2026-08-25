@@ -1,17 +1,8 @@
 # ============================================================
-# DASHBOARD STREAMLIT
 # DIVERSITÀ SPAZIALE URBANA - BOLOGNA
+# Dashboard Streamlit
 #
-# VERSIONE FINALE
-#
-# - struttura GitHub piatta
-# - sidebar fissa
-# - barra superiore Streamlit nascosta
-# - logo SBL cliccabile
-# - modalità LIGHT / DARK selezionabile
-# - palette aziendale
-# - mappa interattiva
-# - grafici e metodologia
+# VERSIONE COMPLETA DEFINITIVA
 # ============================================================
 
 from pathlib import Path
@@ -21,11 +12,16 @@ import geopandas as gpd
 import streamlit as st
 import streamlit.components.v1 as components
 
-from PIL import Image, ImageFilter, ImageEnhance
+from PIL import (
+    Image,
+    ImageChops,
+    ImageEnhance,
+    ImageFilter,
+)
 
 
 # ============================================================
-# 1. CONFIGURAZIONE PAGINA
+# 1. CONFIGURAZIONE STREAMLIT
 # ============================================================
 
 st.set_page_config(
@@ -45,7 +41,7 @@ ROOT = Path(__file__).resolve().parent
 
 # ============================================================
 # 3. FILE DEL PROGETTO
-# Tutti nella root del repository GitHub
+# Tutti i file sono nella root GitHub
 # ============================================================
 
 FILE_POI = (
@@ -100,7 +96,7 @@ FILE_DENSITA = (
 
 
 # ============================================================
-# 4. LOGO SBL - VERSIONE ALTA DEFINIZIONE
+# 4. LOGO SBL
 # ============================================================
 
 NOMI_LOGO = [
@@ -114,10 +110,7 @@ FILE_LOGO = None
 
 for nome in NOMI_LOGO:
 
-    candidato = (
-        ROOT
-        / nome
-    )
+    candidato = ROOT / nome
 
     if candidato.exists():
 
@@ -131,21 +124,17 @@ URL_SBL = (
 
 
 # ============================================================
-# PREPARAZIONE LOGO AD ALTA DEFINIZIONE
+# 5. PREPARAZIONE LOGO HD
 # ============================================================
 #
-# Il PNG originale viene:
+# Il logo viene:
+# - ritagliato automaticamente;
+# - ingrandito con LANCZOS;
+# - leggermente contrastato;
+# - leggermente sharpened;
+# - mantenuto come PNG.
 #
-# 1. aperto alla risoluzione originale;
-# 2. ingrandito internamente almeno a 1400 px;
-# 3. ricampionato con LANCZOS;
-# 4. leggermente contrastato;
-# 5. sottoposto a Unsharp Mask;
-# 6. inviato a Streamlit come PNG ad alta risoluzione.
-#
-# Viene poi visualizzato più piccolo:
-# il downsampling del browser produce bordi e testo
-# sensibilmente più nitidi.
+# Non modifica il file originale.
 # ============================================================
 
 @st.cache_data(
@@ -157,87 +146,168 @@ def prepara_logo_hd(
 
     with Image.open(
         percorso_logo
-    ) as immagine:
+    ) as img:
 
-        immagine = (
-            immagine
-            .convert("RGBA")
+        img = img.convert(
+            "RGBA"
         )
 
 
         # ----------------------------------------------------
-        # Dimensioni originali
+        # Rimozione automatica dello spazio bianco
         # ----------------------------------------------------
 
-        larghezza_originale = (
-            immagine.width
+        rgb = Image.new(
+            "RGB",
+            img.size,
+            "white",
         )
 
-        altezza_originale = (
-            immagine.height
-        )
-
-
-        # ----------------------------------------------------
-        # Risoluzione interna minima
-        # ----------------------------------------------------
-        #
-        # 1400 px garantiscono un'immagine sorgente
-        # molto più grande della dimensione visualizzata.
-        # ----------------------------------------------------
-
-        larghezza_target = max(
-            larghezza_originale,
-            1400,
+        rgb.paste(
+            img,
+            mask=img.getchannel("A"),
         )
 
 
-        rapporto = (
-            larghezza_target
-            / larghezza_originale
+        sfondo = Image.new(
+            "RGB",
+            rgb.size,
+            "white",
         )
 
 
-        altezza_target = int(
-            round(
-                altezza_originale
-                * rapporto
+        differenza = (
+            ImageChops.difference(
+                rgb,
+                sfondo,
             )
         )
 
 
-        # ----------------------------------------------------
-        # Upscaling LANCZOS
-        # ----------------------------------------------------
+        differenza = (
+            ImageEnhance
+            .Contrast(
+                differenza
+            )
+            .enhance(
+                2.0
+            )
+        )
 
-        if (
-            larghezza_target
-            != larghezza_originale
-        ):
 
-            immagine = (
-                immagine.resize(
-                    (
-                        larghezza_target,
-                        altezza_target,
-                    ),
-                    Image.Resampling.LANCZOS,
+        bbox = (
+            differenza.getbbox()
+        )
+
+
+        if bbox is not None:
+
+            sx, alto, dx, basso = bbox
+
+
+            larghezza_logo = (
+                dx - sx
+            )
+
+            altezza_logo = (
+                basso - alto
+            )
+
+
+            padding_x = max(
+                4,
+                int(
+                    larghezza_logo
+                    * 0.06
+                ),
+            )
+
+            padding_y = max(
+                4,
+                int(
+                    altezza_logo
+                    * 0.06
+                ),
+            )
+
+
+            sx = max(
+                0,
+                sx - padding_x,
+            )
+
+            alto = max(
+                0,
+                alto - padding_y,
+            )
+
+            dx = min(
+                img.width,
+                dx + padding_x,
+            )
+
+            basso = min(
+                img.height,
+                basso + padding_y,
+            )
+
+
+            img = img.crop(
+                (
+                    sx,
+                    alto,
+                    dx,
+                    basso,
                 )
             )
 
 
         # ----------------------------------------------------
-        # Micro-aumento contrasto
-        # ----------------------------------------------------
-        #
-        # Molto contenuto per non alterare
-        # i colori aziendali.
+        # Upscaling
         # ----------------------------------------------------
 
-        immagine = (
+        larghezza_target = max(
+            1600,
+            img.width,
+        )
+
+
+        rapporto = (
+            larghezza_target
+            / img.width
+        )
+
+
+        altezza_target = int(
+            round(
+                img.height
+                * rapporto
+            )
+        )
+
+
+        if (
+            img.width
+            != larghezza_target
+        ):
+
+            img = img.resize(
+                (
+                    larghezza_target,
+                    altezza_target,
+                ),
+                Image.Resampling.LANCZOS,
+            )
+
+
+        # ----------------------------------------------------
+        # Contrasto leggerissimo
+        # ----------------------------------------------------
+
+        img = (
             ImageEnhance
             .Contrast(
-                immagine
+                img
             )
             .enhance(
                 1.04
@@ -246,68 +316,64 @@ def prepara_logo_hd(
 
 
         # ----------------------------------------------------
-        # Sharpening
-        # ----------------------------------------------------
-        #
-        # Unsharp Mask abbastanza delicata:
-        # migliora bordi e scritte senza creare
-        # evidenti aloni artificiali.
+        # Unsharp Mask
         # ----------------------------------------------------
 
-        immagine = (
-            immagine.filter(
-                ImageFilter.UnsharpMask(
-                    radius=2.0,
-                    percent=145,
-                    threshold=2,
-                )
+        img = img.filter(
+            ImageFilter.UnsharpMask(
+                radius=1.4,
+                percent=145,
+                threshold=3,
             )
         )
 
 
         # ----------------------------------------------------
-        # Piccolo incremento finale della nitidezza
+        # Nitidezza finale
         # ----------------------------------------------------
 
-        immagine = (
+        img = (
             ImageEnhance
             .Sharpness(
-                immagine
+                img
             )
             .enhance(
-                1.12
+                1.10
             )
         )
 
 
         # ----------------------------------------------------
-        # Esportazione PNG in memoria
+        # Salvataggio in memoria
         # ----------------------------------------------------
 
         buffer = BytesIO()
 
 
-        immagine.save(
+        img.save(
             buffer,
             format="PNG",
             optimize=False,
         )
 
 
-        return (
-            buffer.getvalue()
-        )
+        return buffer.getvalue()
 
 
 # ============================================================
-# 5. SIDEBAR - LOGO
+# 6. LOGO NELLA SIDEBAR
 # ============================================================
 
 if FILE_LOGO is not None:
 
+    logo_hd = prepara_logo_hd(
+        str(FILE_LOGO)
+    )
+
+
     st.sidebar.image(
-        str(FILE_LOGO),
-        width=115,
+        logo_hd,
+        width=155,
         link=URL_SBL,
     )
 
@@ -320,65 +386,62 @@ else:
 
 
 # ============================================================
-# 6. SELETTORE LIGHT / DARK
+# 7. MODALITÀ LIGHT / DARK
 # ============================================================
 
 dark_mode = st.sidebar.toggle(
     "Modalità scura",
     value=False,
-    key="dark_mode",
+    key="modalita_scura",
 )
 
 
 # ============================================================
-# 7. PALETTE DINAMICA
+# 8. COLORI AZIENDALI
 # ============================================================
 
-# Colori aziendali invariati
 BLU = "#00649C"
+
 AZZURRO = "#1C9FE8"
+
 ARANCIONE = "#E8901C"
 
 
+# ============================================================
+# 9. COLORI INTERFACCIA DINAMICI
+# ============================================================
+
 if dark_mode:
 
-    # --------------------------------------------------------
-    # DARK MODE
-    # --------------------------------------------------------
+    SFONDO = "#101722"
 
-    SFONDO = "#111827"
+    SIDEBAR = "#151D29"
 
-    SFONDO_SECONDARIO = "#18212F"
+    CARD = "#1C2634"
 
-    CARD = "#1F2937"
+    CARD_SECONDARIA = "#202C3B"
 
-    SIDEBAR = "#151E2B"
+    TESTO = "#F4F6F8"
 
-    TESTO = "#F3F4F6"
+    TESTO_SECONDARIO = "#BEC8D4"
 
-    TESTO_SECONDARIO = "#C5CED8"
+    BORDO = "#344153"
 
-    BORDO = "#364152"
+    LABEL = "#D5DCE5"
 
-    GRIGIO = "#CBD5E1"
-
-    TABELLA_HOVER = "#263548"
-
-    OMBRA = "rgba(0,0,0,0.28)"
+    OMBRA = (
+        "rgba(0, 0, 0, 0.28)"
+    )
 
 else:
 
-    # --------------------------------------------------------
-    # LIGHT MODE
-    # --------------------------------------------------------
-
     SFONDO = "#F5F7F9"
 
-    SFONDO_SECONDARIO = "#F5F7F9"
+    SIDEBAR = "#FFFFFF"
 
     CARD = "#FFFFFF"
 
-    SIDEBAR = "#FFFFFF"
+    CARD_SECONDARIA = "#F8FAFB"
 
     TESTO = "#202936"
 
@@ -386,24 +449,29 @@ else:
 
     BORDO = "#DCE3E8"
 
-    GRIGIO = "#495B69"
+    LABEL = "#495B69"
 
-    TABELLA_HOVER = "#F0F7FB"
-
-    OMBRA = "rgba(0,0,0,0.045)"
+    OMBRA = (
+        "rgba(0, 0, 0, 0.045)"
+    )
 
 
 # ============================================================
-# 8. CSS DINAMICO
+# 10. CSS COMPLETO
 # ============================================================
 
 st.html(
     f"""
     <style>
 
+    /* ======================================================
+       MODALITÀ COLORE
+       ====================================================== */
+
     :root {{
         color-scheme:
-            {"dark" if dark_mode else "light"} !important;
+            {"dark" if dark_mode else "light"}
+            !important;
     }}
 
 
@@ -427,7 +495,7 @@ st.html(
 
 
     /* ======================================================
-       NASCONDI BARRA STREAMLIT
+       BARRA STREAMLIT
        ====================================================== */
 
     header[data-testid="stHeader"],
@@ -455,7 +523,7 @@ st.html(
 
 
     /* ======================================================
-       AREA PRINCIPALE
+       CONTENUTO PRINCIPALE
        ====================================================== */
 
     .block-container {{
@@ -481,17 +549,7 @@ st.html(
        SIDEBAR
        ====================================================== */
 
-    section[data-testid="stSidebar"] {{
-
-        background-color:
-            {SIDEBAR} !important;
-
-        border-right:
-            1px solid
-            {BORDO} !important;
-    }}
-
-
+    section[data-testid="stSidebar"],
     [data-testid="stSidebarContent"],
     [data-testid="stSidebarUserContent"] {{
 
@@ -500,10 +558,18 @@ st.html(
     }}
 
 
+    section[data-testid="stSidebar"] {{
+
+        border-right:
+            1px solid
+            {BORDO} !important;
+    }}
+
+
     [data-testid="stSidebarUserContent"] {{
 
         padding-top:
-            1.1rem !important;
+            1.2rem !important;
     }}
 
 
@@ -527,19 +593,25 @@ st.html(
 
 
     /* ======================================================
-       TOGGLE
+       LOGO
        ====================================================== */
 
-    [data-testid="stCheckbox"] label,
-    [data-testid="stCheckbox"] span {{
+    [data-testid="stSidebar"]
+    [data-testid="stImage"] img {{
 
-        color:
-            {TESTO} !important;
+        image-rendering:
+            auto;
+
+        backface-visibility:
+            hidden;
+
+        transform:
+            translateZ(0);
     }}
 
 
     /* ======================================================
-       RADIO NAVIGAZIONE
+       RADIO + TOGGLE
        ====================================================== */
 
     [data-testid="stRadio"] label,
@@ -638,7 +710,7 @@ st.html(
     [data-testid="stMetricLabel"] p {{
 
         color:
-            {GRIGIO} !important;
+            {LABEL} !important;
 
         font-weight:
             600 !important;
@@ -683,41 +755,13 @@ st.html(
 
 
     /* ======================================================
-       DATAFRAME
-       ====================================================== */
-
-    [data-testid="stDataFrame"] {{
-
-        background-color:
-            {CARD} !important;
-
-        border-radius:
-            10px !important;
-    }}
-
-
-    /* ======================================================
        IMMAGINI
        ====================================================== */
 
     [data-testid="stImage"] {{
 
-        background-color:
-            {CARD} !important;
-
         border-radius:
             10px !important;
-    }}
-
-
-    /* ======================================================
-       LINK
-       ====================================================== */
-
-    a {{
-
-        color:
-            {AZZURRO} !important;
     }}
 
 
@@ -725,7 +769,9 @@ st.html(
        MOBILE
        ====================================================== */
 
-    @media (max-width: 800px) {{
+    @media (
+        max-width: 800px
+    ) {{
 
         .block-container {{
 
@@ -744,7 +790,7 @@ st.html(
 
 
 # ============================================================
-# 9. NAVIGAZIONE
+# 11. NAVIGAZIONE
 # ============================================================
 
 st.sidebar.title(
@@ -779,7 +825,7 @@ st.sidebar.caption(
 
 
 # ============================================================
-# 10. CONTROLLO FILE
+# 12. CONTROLLO FILE
 # ============================================================
 
 FILE_NECESSARI = [
@@ -798,7 +844,8 @@ FILE_NECESSARI = [
 
 file_mancanti = [
     file
-    for file in FILE_NECESSARI
+    for file
+    in FILE_NECESSARI
     if not file.exists()
 ]
 
@@ -806,9 +853,10 @@ file_mancanti = [
 if file_mancanti:
 
     st.error(
-        "Mancano uno o più file necessari "
-        "alla dashboard."
+        "Mancano uno o più file "
+        "necessari alla dashboard."
     )
+
 
     for file in file_mancanti:
 
@@ -816,11 +864,12 @@ if file_mancanti:
             file.name
         )
 
+
     st.stop()
 
 
 # ============================================================
-# 11. LETTURA DATI
+# 13. LETTURA DATI
 # ============================================================
 
 @st.cache_data(
@@ -877,7 +926,35 @@ with st.spinner(
 
 
 # ============================================================
-# 12. HEADER AZIENDALE
+# 14. VALORI KPI
+# ============================================================
+
+n_poi = len(
+    poi
+)
+
+n_celle = len(
+    griglia
+)
+
+n_quartieri = len(
+    quartieri
+)
+
+n_categorie = (
+    poi[
+        "categoria_finale"
+    ]
+    .nunique()
+)
+
+n_celle_lisa = len(
+    lisa
+)
+
+
+# ============================================================
+# 15. HEADER AZIENDALE
 # ============================================================
 
 st.html(
@@ -904,22 +981,39 @@ st.html(
 
         <div
             style="
-                color: white;
-                font-size: 32px;
-                line-height: 1.15;
-                font-weight: 750;
-                margin-bottom: 9px;
+                color:
+                    white;
+
+                font-size:
+                    32px;
+
+                line-height:
+                    1.15;
+
+                font-weight:
+                    750;
+
+                margin-bottom:
+                    9px;
             "
         >
             Diversità Spaziale Urbana – Bologna
         </div>
 
+
         <div
             style="
-                color: white;
-                font-size: 16px;
-                line-height: 1.5;
-                opacity: 0.97;
+                color:
+                    white;
+
+                font-size:
+                    16px;
+
+                line-height:
+                    1.5;
+
+                opacity:
+                    0.97;
             "
         >
             Analisi della mixité funzionale urbana
@@ -933,7 +1027,7 @@ st.html(
 
 
 # ============================================================
-# 13. PANORAMICA
+# 16. PANORAMICA
 # ============================================================
 
 if pagina == "Panoramica":
@@ -944,7 +1038,7 @@ if pagina == "Panoramica":
 
 
     # --------------------------------------------------------
-    # PRIMA RIGA KPI
+    # KPI - RIGA 1
     # --------------------------------------------------------
 
     c1, c2, c3, c4 = (
@@ -956,7 +1050,10 @@ if pagina == "Panoramica":
 
         st.metric(
             "POI classificati",
-            "7.975",
+            f"{n_poi:,}".replace(
+                ",",
+                "."
+            ),
         )
 
 
@@ -964,7 +1061,9 @@ if pagina == "Panoramica":
 
         st.metric(
             "Celle della griglia",
-            "542",
+            str(
+                n_celle
+            ),
         )
 
 
@@ -972,7 +1071,9 @@ if pagina == "Panoramica":
 
         st.metric(
             "Quartieri",
-            "6",
+            str(
+                n_quartieri
+            ),
         )
 
 
@@ -980,7 +1081,9 @@ if pagina == "Panoramica":
 
         st.metric(
             "Categorie funzionali",
-            "8",
+            str(
+                n_categorie
+            ),
         )
 
 
@@ -988,7 +1091,7 @@ if pagina == "Panoramica":
 
 
     # --------------------------------------------------------
-    # SECONDA RIGA KPI
+    # KPI - RIGA 2
     # --------------------------------------------------------
 
     c5, c6, c7 = (
@@ -1016,7 +1119,9 @@ if pagina == "Panoramica":
 
         st.metric(
             "Celle Moran/LISA",
-            "481",
+            str(
+                n_celle_lisa
+            ),
         )
 
 
@@ -1058,8 +1163,11 @@ if pagina == "Panoramica":
 
             <div
                 style="
-                    font-weight: 700;
-                    margin-bottom: 9px;
+                    font-weight:
+                        700;
+
+                    margin-bottom:
+                        9px;
                 "
             >
                 Indicatore principale:
@@ -1068,7 +1176,8 @@ if pagina == "Panoramica":
 
             <div
                 style="
-                    line-height: 1.6;
+                    line-height:
+                        1.6;
                 "
             >
                 La diversità funzionale viene misurata
@@ -1095,7 +1204,9 @@ if pagina == "Panoramica":
     with g1:
 
         st.image(
-            str(FILE_SHANNON),
+            str(
+                FILE_SHANNON
+            ),
             caption=(
                 "Distribuzione dell'indice "
                 "di Shannon"
@@ -1107,7 +1218,9 @@ if pagina == "Panoramica":
     with g2:
 
         st.image(
-            str(FILE_QUARTIERI_SHANNON),
+            str(
+                FILE_QUARTIERI_SHANNON
+            ),
             caption=(
                 "Diversità funzionale "
                 "per quartiere"
@@ -1117,7 +1230,7 @@ if pagina == "Panoramica":
 
 
 # ============================================================
-# 14. MAPPA INTERATTIVA
+# 17. MAPPA INTERATTIVA
 # ============================================================
 
 elif pagina == "Mappa interattiva":
@@ -1128,9 +1241,8 @@ elif pagina == "Mappa interattiva":
 
 
     st.caption(
-        "Attiva o disattiva i layer della "
-        "griglia, dei quartieri e delle "
-        "otto categorie POI."
+        "Attiva o disattiva i layer della griglia, "
+        "dei quartieri e delle otto categorie POI."
     )
 
 
@@ -1150,7 +1262,7 @@ elif pagina == "Mappa interattiva":
 
 
 # ============================================================
-# 15. QUARTIERI
+# 18. QUARTIERI
 # ============================================================
 
 elif pagina == "Quartieri":
@@ -1181,7 +1293,7 @@ elif pagina == "Quartieri":
 
 
     # --------------------------------------------------------
-    # FORMATI
+    # Formati italiani
     # --------------------------------------------------------
 
     tabella["POI"] = (
@@ -1189,7 +1301,10 @@ elif pagina == "Quartieri":
         .astype(int)
         .map(
             lambda x:
-            f"{x:,}".replace(",", ".")
+            f"{x:,}".replace(
+                ",",
+                "."
+            )
         )
     )
 
@@ -1198,7 +1313,10 @@ elif pagina == "Quartieri":
         tabella["shannon"]
         .map(
             lambda x:
-            f"{x:.4f}".replace(".", ",")
+            f"{x:.4f}".replace(
+                ".",
+                ","
+            )
         )
     )
 
@@ -1211,7 +1329,10 @@ elif pagina == "Quartieri":
         ]
         .map(
             lambda x:
-            f"{x:.4f}".replace(".", ",")
+            f"{x:.4f}".replace(
+                ".",
+                ","
+            )
         )
     )
 
@@ -1227,7 +1348,10 @@ elif pagina == "Quartieri":
         .astype(int)
         .map(
             lambda x:
-            f"{x:,}".replace(",", ".")
+            f"{x:,}".replace(
+                ",",
+                "."
+            )
         )
     )
 
@@ -1241,9 +1365,18 @@ elif pagina == "Quartieri":
         .map(
             lambda x:
             f"{x:,.1f}"
-            .replace(",", "X")
-            .replace(".", ",")
-            .replace("X", ".")
+            .replace(
+                ",",
+                "X"
+            )
+            .replace(
+                ".",
+                ","
+            )
+            .replace(
+                "X",
+                "."
+            )
         )
     )
 
@@ -1270,7 +1403,7 @@ elif pagina == "Quartieri":
 
 
     # --------------------------------------------------------
-    # TABELLA HTML
+    # Costruzione righe HTML
     # --------------------------------------------------------
 
     righe_html = ""
@@ -1293,24 +1426,45 @@ elif pagina == "Quartieri":
         """
 
 
+    # --------------------------------------------------------
+    # Tabella
+    # --------------------------------------------------------
+
     st.html(
         f"""
         <div
             style="
-                overflow-x: auto;
-                background: {CARD};
-                border: 1px solid {BORDO};
-                border-radius: 10px;
-                margin-bottom: 22px;
+                overflow-x:
+                    auto;
+
+                background:
+                    {CARD};
+
+                border:
+                    1px solid
+                    {BORDO};
+
+                border-radius:
+                    10px;
+
+                margin-bottom:
+                    22px;
             "
         >
 
         <table
             style="
-                width: 100%;
-                border-collapse: collapse;
-                color: {TESTO};
-                font-size: 14px;
+                width:
+                    100%;
+
+                border-collapse:
+                    collapse;
+
+                color:
+                    {TESTO};
+
+                font-size:
+                    14px;
             "
         >
 
@@ -1318,10 +1472,14 @@ elif pagina == "Quartieri":
 
                 <tr
                     style="
-                        background: {BLU};
-                        color: white;
+                        background:
+                            {BLU};
+
+                        color:
+                            white;
                     "
                 >
+
                     <th style="padding:12px;text-align:left;">
                         Quartiere
                     </th>
@@ -1349,9 +1507,11 @@ elif pagina == "Quartieri":
                     <th style="padding:12px;text-align:left;">
                         Densità ab./km²
                     </th>
+
                 </tr>
 
             </thead>
+
 
             <tbody>
                 {righe_html}
@@ -1365,7 +1525,7 @@ elif pagina == "Quartieri":
 
 
     # --------------------------------------------------------
-    # GRAFICI
+    # Grafici
     # --------------------------------------------------------
 
     g1, g2 = (
@@ -1376,7 +1536,9 @@ elif pagina == "Quartieri":
     with g1:
 
         st.image(
-            str(FILE_QUARTIERI_SHANNON),
+            str(
+                FILE_QUARTIERI_SHANNON
+            ),
             caption=(
                 "Indice di Shannon "
                 "per quartiere"
@@ -1388,7 +1550,9 @@ elif pagina == "Quartieri":
     with g2:
 
         st.image(
-            str(FILE_DENSITA),
+            str(
+                FILE_DENSITA
+            ),
             caption=(
                 "Diversità funzionale "
                 "e densità abitativa"
@@ -1398,7 +1562,7 @@ elif pagina == "Quartieri":
 
 
 # ============================================================
-# 16. GRAFICI ESPLORATIVI
+# 19. GRAFICI ESPLORATIVI
 # ============================================================
 
 elif pagina == "Grafici esplorativi":
@@ -1416,7 +1580,9 @@ elif pagina == "Grafici esplorativi":
     with g1:
 
         st.image(
-            str(FILE_SHANNON),
+            str(
+                FILE_SHANNON
+            ),
             caption=(
                 "Distribuzione dell'indice "
                 "di Shannon"
@@ -1428,7 +1594,9 @@ elif pagina == "Grafici esplorativi":
     with g2:
 
         st.image(
-            str(FILE_SIMPSON),
+            str(
+                FILE_SIMPSON
+            ),
             caption=(
                 "Distribuzione dell'indice "
                 "di Simpson (dominanza)"
@@ -1445,7 +1613,9 @@ elif pagina == "Grafici esplorativi":
     with g3:
 
         st.image(
-            str(FILE_RICCHEZZA),
+            str(
+                FILE_RICCHEZZA
+            ),
             caption=(
                 "Distribuzione della "
                 "ricchezza categoriale"
@@ -1457,7 +1627,9 @@ elif pagina == "Grafici esplorativi":
     with g4:
 
         st.image(
-            str(FILE_QUARTIERI_SHANNON),
+            str(
+                FILE_QUARTIERI_SHANNON
+            ),
             caption=(
                 "Diversità funzionale "
                 "per quartiere"
@@ -1467,7 +1639,9 @@ elif pagina == "Grafici esplorativi":
 
 
     st.image(
-        str(FILE_DENSITA),
+        str(
+            FILE_DENSITA
+        ),
         caption=(
             "Relazione esplorativa tra "
             "diversità funzionale "
@@ -1478,7 +1652,7 @@ elif pagina == "Grafici esplorativi":
 
 
 # ============================================================
-# 17. METODOLOGIA
+# 20. METODOLOGIA
 # ============================================================
 
 elif pagina == "Metodologia":
@@ -1488,24 +1662,46 @@ elif pagina == "Metodologia":
     )
 
 
+    # --------------------------------------------------------
+    # Introduzione
+    # --------------------------------------------------------
+
     st.html(
         f"""
         <div
             style="
-                background: {CARD};
-                border: 1px solid {BORDO};
-                border-left: 5px solid {BLU};
-                border-radius: 11px;
-                padding: 20px 24px;
-                margin-bottom: 20px;
-                color: {TESTO};
-                line-height: 1.65;
+                background:
+                    {CARD};
+
+                border:
+                    1px solid
+                    {BORDO};
+
+                border-left:
+                    5px solid
+                    {BLU};
+
+                border-radius:
+                    11px;
+
+                padding:
+                    20px 24px;
+
+                margin-bottom:
+                    20px;
+
+                color:
+                    {TESTO};
+
+                line-height:
+                    1.65;
             "
         >
 
             <div
                 style="
-                    margin-bottom: 12px;
+                    margin-bottom:
+                        12px;
                 "
             >
                 Il progetto misura la
@@ -1518,6 +1714,7 @@ elif pagina == "Metodologia":
                     Points of Interest (POI)
                 </strong>.
             </div>
+
 
             <div>
                 L'impostazione costituisce un
@@ -1535,6 +1732,10 @@ elif pagina == "Metodologia":
         """
     )
 
+
+    # --------------------------------------------------------
+    # POI
+    # --------------------------------------------------------
 
     with st.expander(
         "Fonti e classificazione POI",
@@ -1558,6 +1759,10 @@ Il dataset finale comprende **7.975 POI**, classificati nelle otto categorie fun
             """
         )
 
+
+    # --------------------------------------------------------
+    # Griglia
+    # --------------------------------------------------------
 
     with st.expander(
         "Griglia e indicatori"
@@ -1592,6 +1797,10 @@ Numero delle categorie funzionali presenti nell'unità spaziale.
         )
 
 
+    # --------------------------------------------------------
+    # Moran / LISA
+    # --------------------------------------------------------
+
     with st.expander(
         "Autocorrelazione spaziale"
     ):
@@ -1612,6 +1821,10 @@ L'analisi LISA distingue i cluster locali **HH, LL, HL e LH**.
         )
 
 
+    # --------------------------------------------------------
+    # Quartieri
+    # --------------------------------------------------------
+
     with st.expander(
         "Scala dei quartieri"
     ):
@@ -1629,6 +1842,10 @@ Dei **7.975 POI** complessivi:
             """
         )
 
+
+    # --------------------------------------------------------
+    # Popolazione
+    # --------------------------------------------------------
 
     with st.expander(
         "Popolazione e densità"
@@ -1655,6 +1872,10 @@ La densità abitativa è calcolata come residenti per km².
         )
 
 
+    # --------------------------------------------------------
+    # Saragozza
+    # --------------------------------------------------------
+
     with st.expander(
         "Riferimento a spatial_diversity"
     ):
@@ -1671,7 +1892,7 @@ L'applicazione di Bologna utilizza POI e unità spaziali a griglia/quartiere, me
 
 
 # ============================================================
-# 18. FOOTER
+# 21. FOOTER
 # ============================================================
 
 st.markdown("---")
