@@ -4,13 +4,14 @@
 #
 # VERSIONE FINALE
 #
-# - sidebar bloccata e sempre visibile su desktop
-# - barra superiore Streamlit eliminata
-# - tema chiaro forzato anche se l'utente usa Dark
-# - logo SBL cliccabile
-# - palette aziendale
-# - nessun HTML visualizzato come codice
 # - struttura GitHub piatta
+# - sidebar fissa
+# - barra superiore Streamlit nascosta
+# - logo SBL cliccabile
+# - modalità LIGHT / DARK selezionabile
+# - palette aziendale
+# - mappa interattiva
+# - grafici e metodologia
 # ============================================================
 
 from pathlib import Path
@@ -28,11 +29,6 @@ st.set_page_config(
     page_title="Diversità Spaziale Bologna",
     page_icon="🗺️",
     layout="wide",
-
-    # --------------------------------------------------------
-    # Sidebar sempre aperta su desktop.
-    # Non dipendiamo più dal pulsante dell'header.
-    # --------------------------------------------------------
     initial_sidebar_state="locked",
 )
 
@@ -46,7 +42,7 @@ ROOT = Path(__file__).resolve().parent
 
 # ============================================================
 # 3. FILE DEL PROGETTO
-# Tutti nella root GitHub
+# Tutti nella root del repository GitHub
 # ============================================================
 
 FILE_POI = (
@@ -115,7 +111,10 @@ FILE_LOGO = None
 
 for nome in NOMI_LOGO:
 
-    candidato = ROOT / nome
+    candidato = (
+        ROOT
+        / nome
+    )
 
     if candidato.exists():
 
@@ -129,60 +128,134 @@ URL_SBL = (
 
 
 # ============================================================
-# 5. PALETTE AZIENDALE
+# 5. SIDEBAR - LOGO
 # ============================================================
 
+if FILE_LOGO is not None:
+
+    st.sidebar.image(
+        str(FILE_LOGO),
+        width=115,
+        link=URL_SBL,
+    )
+
+else:
+
+    st.sidebar.link_button(
+        "SBL Consultancy",
+        URL_SBL,
+    )
+
+
+# ============================================================
+# 6. SELETTORE LIGHT / DARK
+# ============================================================
+
+dark_mode = st.sidebar.toggle(
+    "Modalità scura",
+    value=False,
+    key="dark_mode",
+)
+
+
+# ============================================================
+# 7. PALETTE DINAMICA
+# ============================================================
+
+# Colori aziendali invariati
 BLU = "#00649C"
 AZZURRO = "#1C9FE8"
-
 ARANCIONE = "#E8901C"
 
-GRIGIO = "#495B69"
 
-TESTO = "#202936"
-TESTO_SECONDARIO = "#667085"
+if dark_mode:
 
-SFONDO = "#F5F7F9"
+    # --------------------------------------------------------
+    # DARK MODE
+    # --------------------------------------------------------
 
-BIANCO = "#FFFFFF"
+    SFONDO = "#111827"
 
-BORDO = "#DCE3E8"
+    SFONDO_SECONDARIO = "#18212F"
+
+    CARD = "#1F2937"
+
+    SIDEBAR = "#151E2B"
+
+    TESTO = "#F3F4F6"
+
+    TESTO_SECONDARIO = "#C5CED8"
+
+    BORDO = "#364152"
+
+    GRIGIO = "#CBD5E1"
+
+    TABELLA_HOVER = "#263548"
+
+    OMBRA = "rgba(0,0,0,0.28)"
+
+else:
+
+    # --------------------------------------------------------
+    # LIGHT MODE
+    # --------------------------------------------------------
+
+    SFONDO = "#F5F7F9"
+
+    SFONDO_SECONDARIO = "#F5F7F9"
+
+    CARD = "#FFFFFF"
+
+    SIDEBAR = "#FFFFFF"
+
+    TESTO = "#202936"
+
+    TESTO_SECONDARIO = "#667085"
+
+    BORDO = "#DCE3E8"
+
+    GRIGIO = "#495B69"
+
+    TABELLA_HOVER = "#F0F7FB"
+
+    OMBRA = "rgba(0,0,0,0.045)"
 
 
 # ============================================================
-# 6. CSS GENERALE
+# 8. CSS DINAMICO
 # ============================================================
 
 st.html(
     f"""
     <style>
 
+    :root {{
+        color-scheme:
+            {"dark" if dark_mode else "light"} !important;
+    }}
+
+
     /* ======================================================
-       FORZATURA LIGHT
+       APP
        ====================================================== */
 
-    :root {{
-        color-scheme: light !important;
-    }}
-
     html,
-    body {{
-        background-color: {SFONDO} !important;
-        color: {TESTO} !important;
-        color-scheme: light !important;
-    }}
-
+    body,
     .stApp,
     [data-testid="stAppViewContainer"],
     [data-testid="stMain"],
     [data-testid="stMainBlockContainer"] {{
-        background-color: {SFONDO} !important;
-        color: {TESTO} !important;
+
+        background-color:
+            {SFONDO} !important;
+
+        color:
+            {TESTO} !important;
     }}
 
 
     /* ======================================================
-       ELIMINAZIONE COMPLETA BARRA SUPERIORE
+       NASCONDI BARRA STREAMLIT
        ====================================================== */
 
     header[data-testid="stHeader"],
@@ -194,10 +267,18 @@ st.html(
     .stAppToolbar,
     #MainMenu,
     footer {{
-        display: none !important;
-        visibility: hidden !important;
-        height: 0 !important;
-        min-height: 0 !important;
+
+        display:
+            none !important;
+
+        visibility:
+            hidden !important;
+
+        height:
+            0 !important;
+
+        min-height:
+            0 !important;
     }}
 
 
@@ -206,13 +287,21 @@ st.html(
        ====================================================== */
 
     .block-container {{
-        max-width: 1480px !important;
 
-        padding-top: 1.25rem !important;
-        padding-bottom: 2.5rem !important;
+        max-width:
+            1480px !important;
 
-        padding-left: 2rem !important;
-        padding-right: 2rem !important;
+        padding-top:
+            1.25rem !important;
+
+        padding-bottom:
+            2.5rem !important;
+
+        padding-left:
+            2rem !important;
+
+        padding-right:
+            2rem !important;
     }}
 
 
@@ -221,43 +310,76 @@ st.html(
        ====================================================== */
 
     section[data-testid="stSidebar"] {{
-        background-color: {BIANCO} !important;
+
+        background-color:
+            {SIDEBAR} !important;
 
         border-right:
             1px solid
             {BORDO} !important;
     }}
 
+
     [data-testid="stSidebarContent"],
     [data-testid="stSidebarUserContent"] {{
-        background-color: {BIANCO} !important;
+
+        background-color:
+            {SIDEBAR} !important;
     }}
+
 
     [data-testid="stSidebarUserContent"] {{
-        padding-top: 1.2rem !important;
+
+        padding-top:
+            1.1rem !important;
     }}
 
-    [data-testid="stSidebar"] * {{
-        color: {TESTO} !important;
+
+    [data-testid="stSidebar"] h1,
+    [data-testid="stSidebar"] h2,
+    [data-testid="stSidebar"] h3,
+    [data-testid="stSidebar"] p,
+    [data-testid="stSidebar"] span,
+    [data-testid="stSidebar"] label {{
+
+        color:
+            {TESTO} !important;
     }}
+
 
     [data-testid="stSidebar"] hr {{
-        border-color: {BORDO} !important;
+
+        border-color:
+            {BORDO} !important;
     }}
 
 
     /* ======================================================
-       NAVIGAZIONE
+       TOGGLE
+       ====================================================== */
+
+    [data-testid="stCheckbox"] label,
+    [data-testid="stCheckbox"] span {{
+
+        color:
+            {TESTO} !important;
+    }}
+
+
+    /* ======================================================
+       RADIO NAVIGAZIONE
        ====================================================== */
 
     [data-testid="stRadio"] label,
     [data-testid="stWidgetLabel"] {{
-        color: {TESTO} !important;
+
+        color:
+            {TESTO} !important;
     }}
 
 
     /* ======================================================
-       TESTI GENERALI
+       TESTI
        ====================================================== */
 
     h1,
@@ -266,23 +388,34 @@ st.html(
     h4,
     h5,
     h6 {{
-        color: {TESTO} !important;
+
+        color:
+            {TESTO} !important;
     }}
+
 
     p,
     li,
     label {{
-        color: {TESTO} !important;
+
+        color:
+            {TESTO} !important;
     }}
+
 
     [data-testid="stMarkdownContainer"],
     [data-testid="stMarkdownContainer"] p,
     [data-testid="stMarkdownContainer"] li {{
-        color: {TESTO} !important;
+
+        color:
+            {TESTO} !important;
     }}
 
+
     [data-testid="stCaptionContainer"] {{
-        color: {TESTO_SECONDARIO} !important;
+
+        color:
+            {TESTO_SECONDARIO} !important;
     }}
 
 
@@ -291,7 +424,9 @@ st.html(
        ====================================================== */
 
     [data-testid="stMetric"] {{
-        background-color: {BIANCO} !important;
+
+        background-color:
+            {CARD} !important;
 
         border:
             1px solid
@@ -312,19 +447,29 @@ st.html(
             120px;
 
         box-shadow:
-            0 2px 7px
-            rgba(0, 0, 0, 0.045);
+            0 2px 8px
+            {OMBRA};
     }}
 
+
     [data-testid="stMetricValue"] {{
-        color: {TESTO} !important;
-        font-weight: 750 !important;
+
+        color:
+            {TESTO} !important;
+
+        font-weight:
+            750 !important;
     }}
+
 
     [data-testid="stMetricLabel"],
     [data-testid="stMetricLabel"] p {{
-        color: {GRIGIO} !important;
-        font-weight: 600 !important;
+
+        color:
+            {GRIGIO} !important;
+
+        font-weight:
+            600 !important;
     }}
 
 
@@ -335,11 +480,17 @@ st.html(
     [data-testid="stExpander"],
     [data-testid="stExpander"] details,
     [data-testid="stExpander"] summary {{
-        background-color: {BIANCO} !important;
-        color: {TESTO} !important;
+
+        background-color:
+            {CARD} !important;
+
+        color:
+            {TESTO} !important;
     }}
 
+
     [data-testid="stExpander"] {{
+
         border:
             1px solid
             {BORDO} !important;
@@ -348,11 +499,28 @@ st.html(
             10px !important;
     }}
 
+
     [data-testid="stExpander"] summary *,
     [data-testid="stExpander"] p,
     [data-testid="stExpander"] li,
     [data-testid="stExpander"] strong {{
-        color: {TESTO} !important;
+
+        color:
+            {TESTO} !important;
+    }}
+
+
+    /* ======================================================
+       DATAFRAME
+       ====================================================== */
+
+    [data-testid="stDataFrame"] {{
+
+        background-color:
+            {CARD} !important;
+
+        border-radius:
+            10px !important;
     }}
 
 
@@ -361,8 +529,23 @@ st.html(
        ====================================================== */
 
     [data-testid="stImage"] {{
-        background-color: {BIANCO} !important;
-        border-radius: 10px !important;
+
+        background-color:
+            {CARD} !important;
+
+        border-radius:
+            10px !important;
+    }}
+
+
+    /* ======================================================
+       LINK
+       ====================================================== */
+
+    a {{
+
+        color:
+            {AZZURRO} !important;
     }}
 
 
@@ -373,8 +556,12 @@ st.html(
     @media (max-width: 800px) {{
 
         .block-container {{
-            padding-left: 1rem !important;
-            padding-right: 1rem !important;
+
+            padding-left:
+                1rem !important;
+
+            padding-right:
+                1rem !important;
         }}
 
     }}
@@ -385,7 +572,42 @@ st.html(
 
 
 # ============================================================
-# 7. CONTROLLO FILE
+# 9. NAVIGAZIONE
+# ============================================================
+
+st.sidebar.title(
+    "Navigazione"
+)
+
+
+pagina = st.sidebar.radio(
+    "Sezione",
+    [
+        "Panoramica",
+        "Mappa interattiva",
+        "Quartieri",
+        "Grafici esplorativi",
+        "Metodologia",
+    ],
+    key="navigazione_principale",
+)
+
+
+st.sidebar.markdown("---")
+
+
+st.sidebar.caption(
+    "Comune di Bologna"
+)
+
+
+st.sidebar.caption(
+    "OpenStreetMap / Comune di Bologna"
+)
+
+
+# ============================================================
+# 10. CONTROLLO FILE
 # ============================================================
 
 FILE_NECESSARI = [
@@ -426,62 +648,7 @@ if file_mancanti:
 
 
 # ============================================================
-# 8. SIDEBAR - LOGO SBL
-# ============================================================
-
-if FILE_LOGO is not None:
-
-    st.sidebar.image(
-        str(FILE_LOGO),
-        width=115,
-        link=URL_SBL,
-    )
-
-else:
-
-    st.sidebar.link_button(
-        "SBL Consultancy",
-        URL_SBL,
-    )
-
-
-# ============================================================
-# 9. SIDEBAR - NAVIGAZIONE
-# ============================================================
-
-st.sidebar.title(
-    "Navigazione"
-)
-
-
-pagina = st.sidebar.radio(
-    "Sezione",
-    [
-        "Panoramica",
-        "Mappa interattiva",
-        "Quartieri",
-        "Grafici esplorativi",
-        "Metodologia",
-    ],
-    key="navigazione_principale",
-)
-
-
-st.sidebar.markdown("---")
-
-
-st.sidebar.caption(
-    "Comune di Bologna"
-)
-
-
-st.sidebar.caption(
-    "OpenStreetMap / Comune di Bologna"
-)
-
-
-# ============================================================
-# 10. LETTURA DATI
+# 11. LETTURA DATI
 # ============================================================
 
 @st.cache_data(
@@ -538,7 +705,7 @@ with st.spinner(
 
 
 # ============================================================
-# 11. HEADER AZIENDALE
+# 12. HEADER AZIENDALE
 # ============================================================
 
 st.html(
@@ -594,7 +761,7 @@ st.html(
 
 
 # ============================================================
-# 12. PANORAMICA
+# 13. PANORAMICA
 # ============================================================
 
 if pagina == "Panoramica":
@@ -605,7 +772,7 @@ if pagina == "Panoramica":
 
 
     # --------------------------------------------------------
-    # KPI GENERALI
+    # PRIMA RIGA KPI
     # --------------------------------------------------------
 
     c1, c2, c3, c4 = (
@@ -649,7 +816,7 @@ if pagina == "Panoramica":
 
 
     # --------------------------------------------------------
-    # KPI SPATIAL
+    # SECONDA RIGA KPI
     # --------------------------------------------------------
 
     c5, c6, c7 = (
@@ -692,7 +859,8 @@ if pagina == "Panoramica":
         f"""
         <div
             style="
-                background: {BIANCO};
+                background:
+                    {CARD};
 
                 border:
                     1px solid
@@ -744,7 +912,7 @@ if pagina == "Panoramica":
 
 
     # --------------------------------------------------------
-    # GRAFICI PANORAMICA
+    # GRAFICI
     # --------------------------------------------------------
 
     g1, g2 = (
@@ -777,7 +945,7 @@ if pagina == "Panoramica":
 
 
 # ============================================================
-# 13. MAPPA INTERATTIVA
+# 14. MAPPA INTERATTIVA
 # ============================================================
 
 elif pagina == "Mappa interattiva":
@@ -810,7 +978,7 @@ elif pagina == "Mappa interattiva":
 
 
 # ============================================================
-# 14. QUARTIERI
+# 15. QUARTIERI
 # ============================================================
 
 elif pagina == "Quartieri":
@@ -840,19 +1008,16 @@ elif pagina == "Quartieri":
     )
 
 
-    # ========================================================
-    # FORMATI ITALIANI
-    # ========================================================
+    # --------------------------------------------------------
+    # FORMATI
+    # --------------------------------------------------------
 
     tabella["POI"] = (
         tabella["n_poi"]
         .astype(int)
         .map(
             lambda x:
-            f"{x:,}".replace(
-                ",",
-                "."
-            )
+            f"{x:,}".replace(",", ".")
         )
     )
 
@@ -861,10 +1026,7 @@ elif pagina == "Quartieri":
         tabella["shannon"]
         .map(
             lambda x:
-            f"{x:.4f}".replace(
-                ".",
-                ","
-            )
+            f"{x:.4f}".replace(".", ",")
         )
     )
 
@@ -877,10 +1039,7 @@ elif pagina == "Quartieri":
         ]
         .map(
             lambda x:
-            f"{x:.4f}".replace(
-                ".",
-                ","
-            )
+            f"{x:.4f}".replace(".", ",")
         )
     )
 
@@ -896,10 +1055,7 @@ elif pagina == "Quartieri":
         .astype(int)
         .map(
             lambda x:
-            f"{x:,}".replace(
-                ",",
-                "."
-            )
+            f"{x:,}".replace(",", ".")
         )
     )
 
@@ -913,18 +1069,9 @@ elif pagina == "Quartieri":
         .map(
             lambda x:
             f"{x:,.1f}"
-            .replace(
-                ",",
-                "X"
-            )
-            .replace(
-                ".",
-                ","
-            )
-            .replace(
-                "X",
-                "."
-            )
+            .replace(",", "X")
+            .replace(".", ",")
+            .replace("X", ".")
         )
     )
 
@@ -950,9 +1097,9 @@ elif pagina == "Quartieri":
     )
 
 
-    # ========================================================
-    # TABELLA HTML CONTROLLATA
-    # ========================================================
+    # --------------------------------------------------------
+    # TABELLA HTML
+    # --------------------------------------------------------
 
     righe_html = ""
 
@@ -979,7 +1126,7 @@ elif pagina == "Quartieri":
         <div
             style="
                 overflow-x: auto;
-                background: {BIANCO};
+                background: {CARD};
                 border: 1px solid {BORDO};
                 border-radius: 10px;
                 margin-bottom: 22px;
@@ -1079,7 +1226,7 @@ elif pagina == "Quartieri":
 
 
 # ============================================================
-# 15. GRAFICI ESPLORATIVI
+# 16. GRAFICI ESPLORATIVI
 # ============================================================
 
 elif pagina == "Grafici esplorativi":
@@ -1159,7 +1306,7 @@ elif pagina == "Grafici esplorativi":
 
 
 # ============================================================
-# 16. METODOLOGIA
+# 17. METODOLOGIA
 # ============================================================
 
 elif pagina == "Metodologia":
@@ -1173,30 +1320,14 @@ elif pagina == "Metodologia":
         f"""
         <div
             style="
-                background: {BIANCO};
-
-                border:
-                    1px solid
-                    {BORDO};
-
-                border-left:
-                    5px solid
-                    {BLU};
-
-                border-radius:
-                    11px;
-
-                padding:
-                    20px 24px;
-
-                margin-bottom:
-                    20px;
-
-                color:
-                    {TESTO};
-
-                line-height:
-                    1.65;
+                background: {CARD};
+                border: 1px solid {BORDO};
+                border-left: 5px solid {BLU};
+                border-radius: 11px;
+                padding: 20px 24px;
+                margin-bottom: 20px;
+                color: {TESTO};
+                line-height: 1.65;
             "
         >
 
@@ -1233,10 +1364,6 @@ elif pagina == "Metodologia":
     )
 
 
-    # --------------------------------------------------------
-    # POI
-    # --------------------------------------------------------
-
     with st.expander(
         "Fonti e classificazione POI",
         expanded=True,
@@ -1259,10 +1386,6 @@ Il dataset finale comprende **7.975 POI**, classificati nelle otto categorie fun
             """
         )
 
-
-    # --------------------------------------------------------
-    # GRIGLIA
-    # --------------------------------------------------------
 
     with st.expander(
         "Griglia e indicatori"
@@ -1297,10 +1420,6 @@ Numero delle categorie funzionali presenti nell'unità spaziale.
         )
 
 
-    # --------------------------------------------------------
-    # AUTOCORRELAZIONE
-    # --------------------------------------------------------
-
     with st.expander(
         "Autocorrelazione spaziale"
     ):
@@ -1321,10 +1440,6 @@ L'analisi LISA distingue i cluster locali **HH, LL, HL e LH**.
         )
 
 
-    # --------------------------------------------------------
-    # QUARTIERI
-    # --------------------------------------------------------
-
     with st.expander(
         "Scala dei quartieri"
     ):
@@ -1342,10 +1457,6 @@ Dei **7.975 POI** complessivi:
             """
         )
 
-
-    # --------------------------------------------------------
-    # POPOLAZIONE
-    # --------------------------------------------------------
 
     with st.expander(
         "Popolazione e densità"
@@ -1372,10 +1483,6 @@ La densità abitativa è calcolata come residenti per km².
         )
 
 
-    # --------------------------------------------------------
-    # SARAGOZZA
-    # --------------------------------------------------------
-
     with st.expander(
         "Riferimento a spatial_diversity"
     ):
@@ -1392,7 +1499,7 @@ L'applicazione di Bologna utilizza POI e unità spaziali a griglia/quartiere, me
 
 
 # ============================================================
-# 17. FOOTER
+# 18. FOOTER
 # ============================================================
 
 st.markdown("---")
