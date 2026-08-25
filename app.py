@@ -1,3 +1,11 @@
+# ============================================================
+# DASHBOARD STREAMLIT
+# Diversità Spaziale Urbana - Bologna
+#
+# VERSIONE GITHUB - STRUTTURA PIATTA
+# Tutti i file sono nella root del repository
+# ============================================================
+
 from pathlib import Path
 
 import geopandas as gpd
@@ -6,7 +14,7 @@ import streamlit.components.v1 as components
 
 
 # ============================================================
-# CONFIGURAZIONE
+# 1. CONFIGURAZIONE PAGINA
 # ============================================================
 
 st.set_page_config(
@@ -18,69 +26,69 @@ st.set_page_config(
 
 
 # ============================================================
-# PERCORSI
+# 2. ROOT DEL REPOSITORY
 # ============================================================
 
 ROOT = Path(__file__).resolve().parent
 
-DATA = ROOT / "data_processed"
-OUTPUTS = ROOT / "outputs"
-GRAFICI = OUTPUTS / "grafici"
 
+# ============================================================
+# 3. FILE NELLA ROOT
+# ============================================================
 
 FILE_POI = (
-    DATA
+    ROOT
     / "bologna_poi_classificati.gpkg"
 )
 
 FILE_GRIGLIA = (
-    DATA
+    ROOT
     / "griglia_indici_bologna.gpkg"
 )
 
 FILE_LISA = (
-    DATA
+    ROOT
     / "griglia_lisa_bologna.gpkg"
 )
 
 FILE_QUARTIERI = (
-    DATA
+    ROOT
     / "quartieri_indici_popolazione_bologna.gpkg"
 )
 
 FILE_MAPPA = (
-    OUTPUTS
+    ROOT
     / "mappa_diversita_bologna.html"
 )
 
 FILE_SHANNON = (
-    GRAFICI
+    ROOT
     / "distribuzione_shannon.png"
 )
 
 FILE_SIMPSON = (
-    GRAFICI
+    ROOT
     / "distribuzione_simpson.png"
 )
 
 FILE_RICCHEZZA = (
-    GRAFICI
+    ROOT
     / "distribuzione_ricchezza.png"
 )
 
 FILE_QUARTIERI_SHANNON = (
-    GRAFICI
+    ROOT
     / "confronto_shannon_quartieri.png"
 )
 
 FILE_DENSITA = (
-    GRAFICI
+    ROOT
     / "relazione_shannon_densita.png"
 )
 
 
 # ============================================================
-# PALETTE AZIENDALE
+# 4. PALETTE AZIENDALE
 # ============================================================
 
 BLU = "#00649C"
@@ -91,7 +99,7 @@ SFONDO = "#F7F9FB"
 
 
 # ============================================================
-# CSS
+# 5. CSS
 # ============================================================
 
 st.markdown(
@@ -103,9 +111,9 @@ st.markdown(
     }}
 
     .block-container {{
-        max-width: 1500px;
         padding-top: 2rem;
         padding-bottom: 3rem;
+        max-width: 1500px;
     }}
 
     h1, h2, h3 {{
@@ -113,37 +121,41 @@ st.markdown(
     }}
 
     [data-testid="stSidebar"] {{
-        background-color: white;
+        background-color: #FFFFFF;
         border-right: 1px solid #E6E9ED;
     }}
 
-    .header-box {{
+    .dashboard-header {{
+        padding: 1.4rem 1.6rem;
+
         background: linear-gradient(
             90deg,
             {BLU},
             {AZZURRO}
         );
 
-        padding: 1.5rem 1.7rem;
         border-radius: 12px;
         margin-bottom: 1.5rem;
     }}
 
-    .header-box h1 {{
+    .dashboard-header h1 {{
         color: white;
         margin: 0;
+        font-size: 2rem;
     }}
 
-    .header-box p {{
+    .dashboard-header p {{
         color: white;
         margin-top: 0.5rem;
         margin-bottom: 0;
+        font-size: 1rem;
+        opacity: 0.95;
     }}
 
-    .kpi {{
+    .kpi-card {{
         background-color: white;
         border-radius: 10px;
-        padding: 1.1rem;
+        padding: 1.1rem 1.2rem;
         border-top: 4px solid {AZZURRO};
         box-shadow: 0 1px 5px rgba(0,0,0,0.08);
         min-height: 115px;
@@ -151,8 +163,9 @@ st.markdown(
 
     .kpi-value {{
         color: {BLU};
-        font-size: 1.8rem;
+        font-size: 1.9rem;
         font-weight: 700;
+        margin-bottom: 0.15rem;
     }}
 
     .kpi-label {{
@@ -161,11 +174,19 @@ st.markdown(
         font-weight: 600;
     }}
 
-    .nota {{
+    .section-box {{
         background-color: white;
         border-radius: 10px;
+        padding: 1.2rem 1.4rem;
         border-left: 4px solid {ARANCIONE};
-        padding: 1.2rem;
+        margin-bottom: 1rem;
+    }}
+
+    .method-box {{
+        background-color: white;
+        border-radius: 10px;
+        padding: 1.3rem 1.5rem;
+        border-left: 4px solid {BLU};
     }}
 
     </style>
@@ -175,10 +196,10 @@ st.markdown(
 
 
 # ============================================================
-# CONTROLLO FILE
+# 6. CONTROLLO FILE NECESSARI
 # ============================================================
 
-file_necessari = [
+FILE_NECESSARI = [
     FILE_POI,
     FILE_GRIGLIA,
     FILE_LISA,
@@ -192,76 +213,136 @@ file_necessari = [
 ]
 
 
-mancanti = [
-    f
-    for f in file_necessari
-    if not f.exists()
+file_mancanti = [
+    file
+    for file in FILE_NECESSARI
+    if not file.exists()
 ]
 
 
-if mancanti:
+if file_mancanti:
 
     st.error(
-        "Mancano file necessari alla dashboard."
+        "Mancano uno o più file necessari "
+        "per avviare la dashboard."
     )
 
-    for f in mancanti:
+    st.write(
+        "File trovati nella root del repository:"
+    )
 
-        st.write(
-            "-",
-            f.relative_to(ROOT)
+    for file in sorted(ROOT.iterdir()):
+
+        if file.is_file():
+
+            st.code(
+                file.name
+            )
+
+    st.write(
+        "File necessari mancanti:"
+    )
+
+    for file in file_mancanti:
+
+        st.code(
+            file.name
         )
 
     st.stop()
 
 
 # ============================================================
-# LETTURA DATI
+# 7. LETTURA DATI CON CACHE
 # ============================================================
 
-@st.cache_data
-def carica_dati():
+@st.cache_data(
+    show_spinner=False
+)
+def carica_poi():
 
-    poi = gpd.read_file(
+    return gpd.read_file(
         FILE_POI
     )
 
-    griglia = gpd.read_file(
+
+@st.cache_data(
+    show_spinner=False
+)
+def carica_griglia():
+
+    return gpd.read_file(
         FILE_GRIGLIA
     )
 
-    lisa = gpd.read_file(
+
+@st.cache_data(
+    show_spinner=False
+)
+def carica_lisa():
+
+    return gpd.read_file(
         FILE_LISA
     )
 
-    quartieri = gpd.read_file(
+
+@st.cache_data(
+    show_spinner=False
+)
+def carica_quartieri():
+
+    return gpd.read_file(
         FILE_QUARTIERI
     )
 
-    return poi, griglia, lisa, quartieri
 
+with st.spinner(
+    "Caricamento risultati..."
+):
 
-poi, griglia, lisa, quartieri = (
-    carica_dati()
-)
+    poi = carica_poi()
+    griglia = carica_griglia()
+    lisa = carica_lisa()
+    quartieri = carica_quartieri()
 
 
 # ============================================================
-# HEADER
+# 8. KPI
+# ============================================================
+
+n_poi = len(poi)
+
+n_celle = len(griglia)
+
+n_quartieri = len(quartieri)
+
+n_categorie = (
+    poi[
+        "categoria_finale"
+    ]
+    .nunique()
+)
+
+n_celle_lisa = len(lisa)
+
+
+# ============================================================
+# 9. HEADER
 # ============================================================
 
 st.markdown(
     """
-    <div class="header-box">
+    <div class="dashboard-header">
 
         <h1>
             Diversità Spaziale Urbana – Bologna
         </h1>
 
         <p>
-            Analisi della mixité funzionale attraverso
-            Points of Interest, indici di diversità
-            e autocorrelazione spaziale.
+            Analisi della mixité funzionale urbana
+            attraverso Points of Interest,
+            indici di diversità e
+            autocorrelazione spaziale.
         </p>
 
     </div>
@@ -271,7 +352,7 @@ st.markdown(
 
 
 # ============================================================
-# NAVIGAZIONE
+# 10. SIDEBAR
 # ============================================================
 
 st.sidebar.title(
@@ -303,24 +384,24 @@ st.sidebar.caption(
 
 
 # ============================================================
-# KPI
+# 11. FUNZIONE KPI
 # ============================================================
 
-def kpi(
+def mostra_kpi(
     valore,
-    nome,
+    etichetta,
 ):
 
     st.markdown(
         f"""
-        <div class="kpi">
+        <div class="kpi-card">
 
             <div class="kpi-value">
                 {valore}
             </div>
 
             <div class="kpi-label">
-                {nome}
+                {etichetta}
             </div>
 
         </div>
@@ -330,7 +411,7 @@ def kpi(
 
 
 # ============================================================
-# PANORAMICA
+# 12. PANORAMICA
 # ============================================================
 
 if pagina == "Panoramica":
@@ -347,32 +428,35 @@ if pagina == "Panoramica":
 
     with c1:
 
-        kpi(
-            "7.975",
+        mostra_kpi(
+            f"{n_poi:,}".replace(
+                ",",
+                "."
+            ),
             "POI classificati",
         )
 
 
     with c2:
 
-        kpi(
-            "542",
+        mostra_kpi(
+            n_celle,
             "Celle della griglia",
         )
 
 
     with c3:
 
-        kpi(
-            "6",
+        mostra_kpi(
+            n_quartieri,
             "Quartieri",
         )
 
 
     with c4:
 
-        kpi(
-            "8",
+        mostra_kpi(
+            n_categorie,
             "Categorie funzionali",
         )
 
@@ -387,24 +471,24 @@ if pagina == "Panoramica":
 
     with c5:
 
-        kpi(
+        mostra_kpi(
             "0,2250",
-            "Moran's I",
+            "Moran's I globale",
         )
 
 
     with c6:
 
-        kpi(
+        mostra_kpi(
             "0,0010",
-            "p-value",
+            "p-value permutazionale",
         )
 
 
     with c7:
 
-        kpi(
-            "481",
+        mostra_kpi(
+            n_celle_lisa,
             "Celle Moran/LISA",
         )
 
@@ -414,16 +498,20 @@ if pagina == "Panoramica":
 
     st.markdown(
         """
-        <div class="nota">
+        <div class="section-box">
 
         <b>Indicatore principale:
         Indice di Shannon.</b>
 
         <br><br>
 
-        Valori più elevati indicano una
-        distribuzione maggiormente equilibrata
-        delle otto categorie funzionali.
+        La diversità funzionale viene misurata
+        sulla distribuzione di otto categorie
+        di POI.
+
+        Valori di Shannon più elevati indicano
+        una composizione funzionale
+        maggiormente equilibrata.
 
         </div>
         """,
@@ -452,7 +540,9 @@ if pagina == "Panoramica":
     with g2:
 
         st.image(
-            str(FILE_QUARTIERI_SHANNON),
+            str(
+                FILE_QUARTIERI_SHANNON
+            ),
             caption=(
                 "Diversità funzionale "
                 "per quartiere"
@@ -462,7 +552,7 @@ if pagina == "Panoramica":
 
 
 # ============================================================
-# MAPPA
+# 13. MAPPA
 # ============================================================
 
 elif pagina == "Mappa interattiva":
@@ -473,25 +563,29 @@ elif pagina == "Mappa interattiva":
 
 
     st.caption(
-        "Esplora la griglia, i quartieri "
-        "e gli otto layer dei POI."
+        "Attiva o disattiva i layer della "
+        "griglia, dei quartieri e delle "
+        "otto categorie POI."
     )
 
 
-    html = FILE_MAPPA.read_text(
-        encoding="utf-8"
+    html_mappa = (
+        FILE_MAPPA
+        .read_text(
+            encoding="utf-8"
+        )
     )
 
 
     components.html(
-        html,
+        html_mappa,
         height=820,
         scrolling=False,
     )
 
 
 # ============================================================
-# QUARTIERI
+# 14. QUARTIERI
 # ============================================================
 
 elif pagina == "Quartieri":
@@ -501,7 +595,7 @@ elif pagina == "Quartieri":
     )
 
 
-    colonne = [
+    colonne_tabella = [
         "quartiere",
         "n_poi",
         "shannon",
@@ -513,7 +607,9 @@ elif pagina == "Quartieri":
 
 
     tabella = (
-        quartieri[colonne]
+        quartieri[
+            colonne_tabella
+        ]
         .copy()
         .sort_values(
             "shannon",
@@ -614,7 +710,7 @@ elif pagina == "Quartieri":
 
 
 # ============================================================
-# GRAFICI
+# 15. GRAFICI
 # ============================================================
 
 elif pagina == "Grafici esplorativi":
@@ -631,6 +727,9 @@ elif pagina == "Grafici esplorativi":
 
         st.image(
             str(FILE_SHANNON),
+            caption=(
+                "Distribuzione Shannon"
+            ),
             use_container_width=True,
         )
 
@@ -639,6 +738,10 @@ elif pagina == "Grafici esplorativi":
 
         st.image(
             str(FILE_SIMPSON),
+            caption=(
+                "Distribuzione "
+                "Simpson dominance"
+            ),
             use_container_width=True,
         )
 
@@ -650,6 +753,10 @@ elif pagina == "Grafici esplorativi":
 
         st.image(
             str(FILE_RICCHEZZA),
+            caption=(
+                "Distribuzione della "
+                "ricchezza categoriale"
+            ),
             use_container_width=True,
         )
 
@@ -657,19 +764,29 @@ elif pagina == "Grafici esplorativi":
     with g4:
 
         st.image(
-            str(FILE_QUARTIERI_SHANNON),
+            str(
+                FILE_QUARTIERI_SHANNON
+            ),
+            caption=(
+                "Shannon per quartiere"
+            ),
             use_container_width=True,
         )
 
 
     st.image(
         str(FILE_DENSITA),
+        caption=(
+            "Relazione esplorativa tra "
+            "diversità funzionale e "
+            "densità abitativa"
+        ),
         use_container_width=True,
     )
 
 
 # ============================================================
-# METODOLOGIA
+# 16. METODOLOGIA
 # ============================================================
 
 elif pagina == "Metodologia":
@@ -681,26 +798,38 @@ elif pagina == "Metodologia":
 
     st.markdown(
         """
+        <div class="method-box">
+
         Il progetto misura la diversità
         funzionale urbana nel Comune di Bologna
-        attraverso la distribuzione dei POI.
+        attraverso la distribuzione spaziale
+        dei <b>Points of Interest (POI)</b>.
 
-        L'approccio costituisce un adattamento
-        concettuale del progetto
-        **spatial_diversity**
-        dell'Università di Saragozza.
-        """
+        <br><br>
+
+        L'impostazione costituisce un
+        <b>adattamento dell'approccio concettuale
+        del progetto spatial_diversity
+        dell'Università di Saragozza</b>.
+
+        </div>
+        """,
+        unsafe_allow_html=True,
     )
 
 
     with st.expander(
-        "POI e categorie",
+        "Fonti e classificazione POI",
         expanded=True,
     ):
 
         st.markdown(
             """
-            **7.975 POI** classificati in:
+            **Fonte POI:** OpenStreetMap /
+            Geofabrik.
+
+            **7.975 POI** classificati in
+            otto categorie:
 
             - commercio
             - ristorazione
@@ -715,11 +844,17 @@ elif pagina == "Metodologia":
 
 
     with st.expander(
-        "Indicatori",
+        "Griglia e indicatori"
     ):
 
         st.markdown(
             """
+            Griglia adattiva con celle di:
+
+            - 250 m
+            - 500 m
+            - 1.000 m
+
             **Shannon**
 
             H = - Σ pᵢ ln(pᵢ)
@@ -730,53 +865,58 @@ elif pagina == "Metodologia":
 
             **Ricchezza categoriale**
 
-            Numero di categorie presenti.
+            Numero delle categorie presenti.
             """
         )
 
 
     with st.expander(
-        "Autocorrelazione",
+        "Autocorrelazione spaziale"
     ):
 
         st.markdown(
             """
-            - 481 celle
+            - 481 celle analizzate
             - contiguità Queen
             - 999 permutazioni
             - seed = 42
             - Moran's I = 0,2250
             - p-value = 0,0010
+
+            LISA distingue i cluster
+            HH, LL, HL e LH.
             """
         )
 
 
     with st.expander(
-        "Quartieri",
+        "Scala dei quartieri"
     ):
 
         st.markdown(
             """
-            L'analisi territoriale utilizza
-            i 6 quartieri ufficiali.
+            L'analisi territoriale comprende
+            i **6 quartieri ufficiali di Bologna**.
 
-            **7.970 POI** ricadono nei quartieri.
+            **7.970 POI** ricadono all'interno
+            dei quartieri.
 
-            I **5 POI** rimanenti restano
+            I restanti **5 POI** rimangono
             nell'analisi a griglia.
             """
         )
 
 
     with st.expander(
-        "Popolazione",
+        "Popolazione e densità"
     ):
 
         st.markdown(
             """
-            Anno di riferimento: **2024**
+            Anno di riferimento:
+            **2024**
 
-            Residenti nei 6 quartieri:
+            Residenti nei sei quartieri:
             **392.044**
 
             Senza fissa dimora:
@@ -789,11 +929,12 @@ elif pagina == "Metodologia":
 
 
 # ============================================================
-# FOOTER
+# 17. FOOTER
 # ============================================================
 
 st.markdown("---")
 
 st.caption(
-    "Diversità Spaziale Urbana – Bologna"
+    "Diversità Spaziale Urbana – Bologna | "
+    "Workflow Python riproducibile"
 )
