@@ -4,13 +4,13 @@
 #
 # VERSIONE FINALE
 #
-# - struttura GitHub piatta
-# - sidebar sempre disponibile
-# - barra Streamlit ridotta al minimo
+# - sidebar bloccata e sempre visibile su desktop
+# - barra superiore Streamlit eliminata
+# - tema chiaro forzato anche se l'utente usa Dark
 # - logo SBL cliccabile
-# - tema chiaro coerente anche da Dark Mode
 # - palette aziendale
 # - nessun HTML visualizzato come codice
+# - struttura GitHub piatta
 # ============================================================
 
 from pathlib import Path
@@ -28,12 +28,17 @@ st.set_page_config(
     page_title="Diversità Spaziale Bologna",
     page_icon="🗺️",
     layout="wide",
-    initial_sidebar_state="expanded",
+
+    # --------------------------------------------------------
+    # Sidebar sempre aperta su desktop.
+    # Non dipendiamo più dal pulsante dell'header.
+    # --------------------------------------------------------
+    initial_sidebar_state="locked",
 )
 
 
 # ============================================================
-# 2. ROOT
+# 2. ROOT DEL REPOSITORY
 # ============================================================
 
 ROOT = Path(__file__).resolve().parent
@@ -110,10 +115,7 @@ FILE_LOGO = None
 
 for nome in NOMI_LOGO:
 
-    candidato = (
-        ROOT
-        / nome
-    )
+    candidato = ROOT / nome
 
     if candidato.exists():
 
@@ -131,37 +133,24 @@ URL_SBL = (
 # ============================================================
 
 BLU = "#00649C"
-
 AZZURRO = "#1C9FE8"
 
 ARANCIONE = "#E8901C"
 
 GRIGIO = "#495B69"
 
-TESTO = "#1F2937"
-
+TESTO = "#202936"
 TESTO_SECONDARIO = "#667085"
 
-SFONDO = "#F6F8FA"
+SFONDO = "#F5F7F9"
 
 BIANCO = "#FFFFFF"
 
-BORDO = "#DDE3E8"
+BORDO = "#DCE3E8"
 
 
 # ============================================================
-# 6. CSS
-# ============================================================
-#
-# IMPORTANTE:
-#
-# NON nascondiamo più l'intero stHeader.
-#
-# Manteniamo una barra sottilissima e trasparente,
-# necessaria a Streamlit per il controllo sidebar.
-#
-# Nascondiamo invece solo gli elementi inutili:
-# Share, GitHub, menu, deploy ecc.
+# 6. CSS GENERALE
 # ============================================================
 
 st.html(
@@ -169,7 +158,7 @@ st.html(
     <style>
 
     /* ======================================================
-       TEMA CHIARO
+       FORZATURA LIGHT
        ====================================================== */
 
     :root {{
@@ -177,118 +166,98 @@ st.html(
     }}
 
     html,
-    body,
+    body {{
+        background-color: {SFONDO} !important;
+        color: {TESTO} !important;
+        color-scheme: light !important;
+    }}
+
     .stApp,
     [data-testid="stAppViewContainer"],
     [data-testid="stMain"],
     [data-testid="stMainBlockContainer"] {{
-
-        background-color:
-            {SFONDO} !important;
-
-        color:
-            {TESTO} !important;
+        background-color: {SFONDO} !important;
+        color: {TESTO} !important;
     }}
 
 
     /* ======================================================
-       HEADER STREAMLIT
-       ====================================================== */
-       
-    /*
-    Non viene eliminato:
-    serve per il controllo della sidebar.
-    */
-
-    header[data-testid="stHeader"] {{
-
-        display:
-            flex !important;
-
-        visibility:
-            visible !important;
-
-        height:
-            2.4rem !important;
-
-        min-height:
-            2.4rem !important;
-
-        background:
-            transparent !important;
-
-        box-shadow:
-            none !important;
-
-        border:
-            none !important;
-    }}
-
-
-    /* ======================================================
-       NASCONDIAMO SOLO GLI ELEMENTI FASTIDIOSI
+       ELIMINAZIONE COMPLETA BARRA SUPERIORE
        ====================================================== */
 
-    [data-testid="stHeaderActionElements"],
+    header[data-testid="stHeader"],
     [data-testid="stToolbar"],
+    [data-testid="stHeaderActionElements"],
     [data-testid="stDecoration"],
     [data-testid="stStatusWidget"],
     [data-testid="stAppDeployButton"],
     .stAppToolbar,
     #MainMenu,
     footer {{
-
-        display:
-            none !important;
-
-        visibility:
-            hidden !important;
+        display: none !important;
+        visibility: hidden !important;
+        height: 0 !important;
+        min-height: 0 !important;
     }}
 
 
     /* ======================================================
-       CONTROLLO SIDEBAR SEMPRE DISPONIBILE
-       ====================================================== */
-
-    [data-testid="stSidebarCollapseButton"],
-    [data-testid="stSidebarCollapsedControl"] {{
-
-        display:
-            flex !important;
-
-        visibility:
-            visible !important;
-
-        opacity:
-            1 !important;
-    }}
-
-
-    /* ======================================================
-       CONTENUTO PRINCIPALE
+       AREA PRINCIPALE
        ====================================================== */
 
     .block-container {{
+        max-width: 1480px !important;
 
-        max-width:
-            1480px !important;
+        padding-top: 1.25rem !important;
+        padding-bottom: 2.5rem !important;
 
-        padding-top:
-            0.4rem !important;
-
-        padding-bottom:
-            2.5rem !important;
-
-        padding-left:
-            2rem !important;
-
-        padding-right:
-            2rem !important;
+        padding-left: 2rem !important;
+        padding-right: 2rem !important;
     }}
 
 
     /* ======================================================
-       TESTI
+       SIDEBAR
+       ====================================================== */
+
+    section[data-testid="stSidebar"] {{
+        background-color: {BIANCO} !important;
+
+        border-right:
+            1px solid
+            {BORDO} !important;
+    }}
+
+    [data-testid="stSidebarContent"],
+    [data-testid="stSidebarUserContent"] {{
+        background-color: {BIANCO} !important;
+    }}
+
+    [data-testid="stSidebarUserContent"] {{
+        padding-top: 1.2rem !important;
+    }}
+
+    [data-testid="stSidebar"] * {{
+        color: {TESTO} !important;
+    }}
+
+    [data-testid="stSidebar"] hr {{
+        border-color: {BORDO} !important;
+    }}
+
+
+    /* ======================================================
+       NAVIGAZIONE
+       ====================================================== */
+
+    [data-testid="stRadio"] label,
+    [data-testid="stWidgetLabel"] {{
+        color: {TESTO} !important;
+    }}
+
+
+    /* ======================================================
+       TESTI GENERALI
        ====================================================== */
 
     h1,
@@ -297,89 +266,23 @@ st.html(
     h4,
     h5,
     h6 {{
-
-        color:
-            {TESTO} !important;
+        color: {TESTO} !important;
     }}
 
     p,
     li,
     label {{
-
-        color:
-            {TESTO} !important;
+        color: {TESTO} !important;
     }}
-
 
     [data-testid="stMarkdownContainer"],
     [data-testid="stMarkdownContainer"] p,
     [data-testid="stMarkdownContainer"] li {{
-
-        color:
-            {TESTO} !important;
+        color: {TESTO} !important;
     }}
-
 
     [data-testid="stCaptionContainer"] {{
-
-        color:
-            {TESTO_SECONDARIO} !important;
-    }}
-
-
-    /* ======================================================
-       SIDEBAR
-       ====================================================== */
-
-    [data-testid="stSidebar"] {{
-
-        background-color:
-            {BIANCO} !important;
-
-        border-right:
-            1px solid
-            {BORDO} !important;
-    }}
-
-
-    [data-testid="stSidebarContent"] {{
-
-        background-color:
-            {BIANCO} !important;
-
-        padding-top:
-            0.7rem !important;
-    }}
-
-
-    [data-testid="stSidebar"] h1,
-    [data-testid="stSidebar"] h2,
-    [data-testid="stSidebar"] h3,
-    [data-testid="stSidebar"] p,
-    [data-testid="stSidebar"] span,
-    [data-testid="stSidebar"] label {{
-
-        color:
-            {TESTO} !important;
-    }}
-
-
-    [data-testid="stSidebar"] hr {{
-
-        border-color:
-            {BORDO} !important;
-    }}
-
-
-    /* ======================================================
-       NAVIGAZIONE RADIO
-       ====================================================== */
-
-    [data-testid="stRadio"],
-    [data-testid="stRadio"] label {{
-
-        color:
-            {TESTO} !important;
+        color: {TESTO_SECONDARIO} !important;
     }}
 
 
@@ -388,9 +291,7 @@ st.html(
        ====================================================== */
 
     [data-testid="stMetric"] {{
-
-        background-color:
-            {BIANCO} !important;
+        background-color: {BIANCO} !important;
 
         border:
             1px solid
@@ -405,40 +306,25 @@ st.html(
 
         padding:
             1rem
-            1.1rem !important;
+            1.15rem !important;
 
         min-height:
-            115px;
+            120px;
 
         box-shadow:
-            0 2px 8px
-            rgba(
-                0,
-                0,
-                0,
-                0.045
-            );
+            0 2px 7px
+            rgba(0, 0, 0, 0.045);
     }}
-
 
     [data-testid="stMetricValue"] {{
-
-        color:
-            {BLU} !important;
-
-        font-weight:
-            750 !important;
+        color: {TESTO} !important;
+        font-weight: 750 !important;
     }}
-
 
     [data-testid="stMetricLabel"],
     [data-testid="stMetricLabel"] p {{
-
-        color:
-            {GRIGIO} !important;
-
-        font-weight:
-            600 !important;
+        color: {GRIGIO} !important;
+        font-weight: 600 !important;
     }}
 
 
@@ -446,11 +332,14 @@ st.html(
        EXPANDER
        ====================================================== */
 
+    [data-testid="stExpander"],
+    [data-testid="stExpander"] details,
+    [data-testid="stExpander"] summary {{
+        background-color: {BIANCO} !important;
+        color: {TESTO} !important;
+    }}
+
     [data-testid="stExpander"] {{
-
-        background-color:
-            {BIANCO} !important;
-
         border:
             1px solid
             {BORDO} !important;
@@ -459,39 +348,11 @@ st.html(
             10px !important;
     }}
 
-
-    [data-testid="stExpander"] details,
-    [data-testid="stExpander"] summary {{
-
-        background-color:
-            {BIANCO} !important;
-
-        color:
-            {TESTO} !important;
-    }}
-
-
     [data-testid="stExpander"] summary *,
     [data-testid="stExpander"] p,
     [data-testid="stExpander"] li,
     [data-testid="stExpander"] strong {{
-
-        color:
-            {TESTO} !important;
-    }}
-
-
-    /* ======================================================
-       DATAFRAME
-       ====================================================== */
-
-    [data-testid="stDataFrame"] {{
-
-        background-color:
-            {BIANCO} !important;
-
-        border-radius:
-            10px !important;
+        color: {TESTO} !important;
     }}
 
 
@@ -500,12 +361,8 @@ st.html(
        ====================================================== */
 
     [data-testid="stImage"] {{
-
-        background-color:
-            {BIANCO} !important;
-
-        border-radius:
-            10px !important;
+        background-color: {BIANCO} !important;
+        border-radius: 10px !important;
     }}
 
 
@@ -513,17 +370,11 @@ st.html(
        MOBILE
        ====================================================== */
 
-    @media (
-        max-width: 800px
-    ) {{
+    @media (max-width: 800px) {{
 
         .block-container {{
-
-            padding-left:
-                1rem !important;
-
-            padding-right:
-                1rem !important;
+            padding-left: 1rem !important;
+            padding-right: 1rem !important;
         }}
 
     }}
@@ -553,8 +404,7 @@ FILE_NECESSARI = [
 
 file_mancanti = [
     file
-    for file
-    in FILE_NECESSARI
+    for file in FILE_NECESSARI
     if not file.exists()
 ]
 
@@ -562,8 +412,8 @@ file_mancanti = [
 if file_mancanti:
 
     st.error(
-        "Mancano uno o più file "
-        "necessari alla dashboard."
+        "Mancano uno o più file necessari "
+        "alla dashboard."
     )
 
     for file in file_mancanti:
@@ -576,7 +426,7 @@ if file_mancanti:
 
 
 # ============================================================
-# 8. LOGO SBL
+# 8. SIDEBAR - LOGO SBL
 # ============================================================
 
 if FILE_LOGO is not None:
@@ -596,7 +446,7 @@ else:
 
 
 # ============================================================
-# 9. NAVIGAZIONE
+# 9. SIDEBAR - NAVIGAZIONE
 # ============================================================
 
 st.sidebar.title(
@@ -613,6 +463,7 @@ pagina = st.sidebar.radio(
         "Grafici esplorativi",
         "Metodologia",
     ],
+    key="navigazione_principale",
 )
 
 
@@ -705,30 +556,20 @@ st.html(
                 14px;
 
             padding:
-                24px
-                28px;
+                25px 30px;
 
             margin-bottom:
-                26px;
+                28px;
         "
     >
 
         <div
             style="
-                color:
-                    white;
-
-                font-size:
-                    32px;
-
-                line-height:
-                    1.15;
-
-                font-weight:
-                    750;
-
-                margin-bottom:
-                    9px;
+                color: white;
+                font-size: 32px;
+                line-height: 1.15;
+                font-weight: 750;
+                margin-bottom: 9px;
             "
         >
             Diversità Spaziale Urbana – Bologna
@@ -736,17 +577,10 @@ st.html(
 
         <div
             style="
-                color:
-                    white;
-
-                font-size:
-                    16px;
-
-                line-height:
-                    1.5;
-
-                opacity:
-                    0.96;
+                color: white;
+                font-size: 16px;
+                line-height: 1.5;
+                opacity: 0.97;
             "
         >
             Analisi della mixité funzionale urbana
@@ -769,6 +603,10 @@ if pagina == "Panoramica":
         "Quadro generale"
     )
 
+
+    # --------------------------------------------------------
+    # KPI GENERALI
+    # --------------------------------------------------------
 
     c1, c2, c3, c4 = (
         st.columns(4)
@@ -810,6 +648,10 @@ if pagina == "Panoramica":
     st.write("")
 
 
+    # --------------------------------------------------------
+    # KPI SPATIAL
+    # --------------------------------------------------------
+
     c5, c6, c7 = (
         st.columns(3)
     )
@@ -842,12 +684,15 @@ if pagina == "Panoramica":
     st.write("")
 
 
+    # --------------------------------------------------------
+    # NOTA SHANNON
+    # --------------------------------------------------------
+
     st.html(
         f"""
         <div
             style="
-                background:
-                    {BIANCO};
+                background: {BIANCO};
 
                 border:
                     1px solid
@@ -861,8 +706,7 @@ if pagina == "Panoramica":
                     11px;
 
                 padding:
-                    18px
-                    22px;
+                    18px 22px;
 
                 margin-bottom:
                     22px;
@@ -874,11 +718,8 @@ if pagina == "Panoramica":
 
             <div
                 style="
-                    font-weight:
-                        700;
-
-                    margin-bottom:
-                        9px;
+                    font-weight: 700;
+                    margin-bottom: 9px;
                 "
             >
                 Indicatore principale:
@@ -887,13 +728,11 @@ if pagina == "Panoramica":
 
             <div
                 style="
-                    line-height:
-                        1.6;
+                    line-height: 1.6;
                 "
             >
                 La diversità funzionale viene misurata
                 sulla distribuzione di otto categorie di POI.
-
                 Valori di Shannon più elevati indicano
                 una composizione funzionale maggiormente
                 equilibrata.
@@ -904,6 +743,10 @@ if pagina == "Panoramica":
     )
 
 
+    # --------------------------------------------------------
+    # GRAFICI PANORAMICA
+    # --------------------------------------------------------
+
     g1, g2 = (
         st.columns(2)
     )
@@ -912,9 +755,7 @@ if pagina == "Panoramica":
     with g1:
 
         st.image(
-            str(
-                FILE_SHANNON
-            ),
+            str(FILE_SHANNON),
             caption=(
                 "Distribuzione dell'indice "
                 "di Shannon"
@@ -926,9 +767,7 @@ if pagina == "Panoramica":
     with g2:
 
         st.image(
-            str(
-                FILE_QUARTIERI_SHANNON
-            ),
+            str(FILE_QUARTIERI_SHANNON),
             caption=(
                 "Diversità funzionale "
                 "per quartiere"
@@ -938,7 +777,7 @@ if pagina == "Panoramica":
 
 
 # ============================================================
-# 13. MAPPA
+# 13. MAPPA INTERATTIVA
 # ============================================================
 
 elif pagina == "Mappa interattiva":
@@ -1001,41 +840,32 @@ elif pagina == "Quartieri":
     )
 
 
-    tabella = tabella.rename(
-        columns={
-            "quartiere":
-                "Quartiere",
-
-            "n_poi":
-                "POI",
-
-            "shannon":
-                "Shannon",
-
-            "simpson_dominance":
-                "Simpson dominance",
-
-            "ricchezza":
-                "Ricchezza",
-
-            "residenti":
-                "Residenti",
-
-            "densita_ab_kmq":
-                "Densità ab./km²",
-        }
-    )
-
+    # ========================================================
+    # FORMATI ITALIANI
+    # ========================================================
 
     tabella["POI"] = (
-        tabella["POI"]
+        tabella["n_poi"]
         .astype(int)
+        .map(
+            lambda x:
+            f"{x:,}".replace(
+                ",",
+                "."
+            )
+        )
     )
 
 
     tabella["Shannon"] = (
-        tabella["Shannon"]
-        .round(4)
+        tabella["shannon"]
+        .map(
+            lambda x:
+            f"{x:.4f}".replace(
+                ".",
+                ","
+            )
+        )
     )
 
 
@@ -1043,21 +873,34 @@ elif pagina == "Quartieri":
         "Simpson dominance"
     ] = (
         tabella[
-            "Simpson dominance"
+            "simpson_dominance"
         ]
-        .round(4)
+        .map(
+            lambda x:
+            f"{x:.4f}".replace(
+                ".",
+                ","
+            )
+        )
     )
 
 
     tabella["Ricchezza"] = (
-        tabella["Ricchezza"]
+        tabella["ricchezza"]
         .astype(int)
     )
 
 
     tabella["Residenti"] = (
-        tabella["Residenti"]
+        tabella["residenti"]
         .astype(int)
+        .map(
+            lambda x:
+            f"{x:,}".replace(
+                ",",
+                "."
+            )
+        )
     )
 
 
@@ -1065,21 +908,146 @@ elif pagina == "Quartieri":
         "Densità ab./km²"
     ] = (
         tabella[
-            "Densità ab./km²"
+            "densita_ab_kmq"
         ]
-        .round(1)
+        .map(
+            lambda x:
+            f"{x:,.1f}"
+            .replace(
+                ",",
+                "X"
+            )
+            .replace(
+                ".",
+                ","
+            )
+            .replace(
+                "X",
+                "."
+            )
+        )
     )
 
 
-    st.dataframe(
-        tabella,
-        hide_index=True,
-        use_container_width=True,
+    tabella_finale = (
+        tabella[
+            [
+                "quartiere",
+                "POI",
+                "Shannon",
+                "Simpson dominance",
+                "Ricchezza",
+                "Residenti",
+                "Densità ab./km²",
+            ]
+        ]
+        .rename(
+            columns={
+                "quartiere":
+                    "Quartiere"
+            }
+        )
     )
 
 
-    st.write("")
+    # ========================================================
+    # TABELLA HTML CONTROLLATA
+    # ========================================================
 
+    righe_html = ""
+
+
+    for _, riga in (
+        tabella_finale.iterrows()
+    ):
+
+        righe_html += f"""
+        <tr>
+            <td>{riga["Quartiere"]}</td>
+            <td>{riga["POI"]}</td>
+            <td>{riga["Shannon"]}</td>
+            <td>{riga["Simpson dominance"]}</td>
+            <td>{riga["Ricchezza"]}</td>
+            <td>{riga["Residenti"]}</td>
+            <td>{riga["Densità ab./km²"]}</td>
+        </tr>
+        """
+
+
+    st.html(
+        f"""
+        <div
+            style="
+                overflow-x: auto;
+                background: {BIANCO};
+                border: 1px solid {BORDO};
+                border-radius: 10px;
+                margin-bottom: 22px;
+            "
+        >
+
+        <table
+            style="
+                width: 100%;
+                border-collapse: collapse;
+                color: {TESTO};
+                font-size: 14px;
+            "
+        >
+
+            <thead>
+
+                <tr
+                    style="
+                        background: {BLU};
+                        color: white;
+                    "
+                >
+                    <th style="padding:12px;text-align:left;">
+                        Quartiere
+                    </th>
+
+                    <th style="padding:12px;text-align:left;">
+                        POI
+                    </th>
+
+                    <th style="padding:12px;text-align:left;">
+                        Shannon
+                    </th>
+
+                    <th style="padding:12px;text-align:left;">
+                        Simpson dominance
+                    </th>
+
+                    <th style="padding:12px;text-align:left;">
+                        Ricchezza
+                    </th>
+
+                    <th style="padding:12px;text-align:left;">
+                        Residenti
+                    </th>
+
+                    <th style="padding:12px;text-align:left;">
+                        Densità ab./km²
+                    </th>
+                </tr>
+
+            </thead>
+
+            <tbody>
+                {righe_html}
+            </tbody>
+
+        </table>
+
+        </div>
+        """
+    )
+
+
+    # --------------------------------------------------------
+    # GRAFICI
+    # --------------------------------------------------------
 
     g1, g2 = (
         st.columns(2)
@@ -1089,9 +1057,7 @@ elif pagina == "Quartieri":
     with g1:
 
         st.image(
-            str(
-                FILE_QUARTIERI_SHANNON
-            ),
+            str(FILE_QUARTIERI_SHANNON),
             caption=(
                 "Indice di Shannon "
                 "per quartiere"
@@ -1103,9 +1069,7 @@ elif pagina == "Quartieri":
     with g2:
 
         st.image(
-            str(
-                FILE_DENSITA
-            ),
+            str(FILE_DENSITA),
             caption=(
                 "Diversità funzionale "
                 "e densità abitativa"
@@ -1133,9 +1097,7 @@ elif pagina == "Grafici esplorativi":
     with g1:
 
         st.image(
-            str(
-                FILE_SHANNON
-            ),
+            str(FILE_SHANNON),
             caption=(
                 "Distribuzione dell'indice "
                 "di Shannon"
@@ -1147,9 +1109,7 @@ elif pagina == "Grafici esplorativi":
     with g2:
 
         st.image(
-            str(
-                FILE_SIMPSON
-            ),
+            str(FILE_SIMPSON),
             caption=(
                 "Distribuzione dell'indice "
                 "di Simpson (dominanza)"
@@ -1166,9 +1126,7 @@ elif pagina == "Grafici esplorativi":
     with g3:
 
         st.image(
-            str(
-                FILE_RICCHEZZA
-            ),
+            str(FILE_RICCHEZZA),
             caption=(
                 "Distribuzione della "
                 "ricchezza categoriale"
@@ -1180,9 +1138,7 @@ elif pagina == "Grafici esplorativi":
     with g4:
 
         st.image(
-            str(
-                FILE_QUARTIERI_SHANNON
-            ),
+            str(FILE_QUARTIERI_SHANNON),
             caption=(
                 "Diversità funzionale "
                 "per quartiere"
@@ -1192,9 +1148,7 @@ elif pagina == "Grafici esplorativi":
 
 
     st.image(
-        str(
-            FILE_DENSITA
-        ),
+        str(FILE_DENSITA),
         caption=(
             "Relazione esplorativa tra "
             "diversità funzionale "
@@ -1219,8 +1173,7 @@ elif pagina == "Metodologia":
         f"""
         <div
             style="
-                background:
-                    {BIANCO};
+                background: {BIANCO};
 
                 border:
                     1px solid
@@ -1234,8 +1187,7 @@ elif pagina == "Metodologia":
                     11px;
 
                 padding:
-                    20px
-                    24px;
+                    20px 24px;
 
                 margin-bottom:
                     20px;
@@ -1250,8 +1202,7 @@ elif pagina == "Metodologia":
 
             <div
                 style="
-                    margin-bottom:
-                        12px;
+                    margin-bottom: 12px;
                 "
             >
                 Il progetto misura la
@@ -1282,6 +1233,10 @@ elif pagina == "Metodologia":
     )
 
 
+    # --------------------------------------------------------
+    # POI
+    # --------------------------------------------------------
+
     with st.expander(
         "Fonti e classificazione POI",
         expanded=True,
@@ -1304,6 +1259,10 @@ Il dataset finale comprende **7.975 POI**, classificati nelle otto categorie fun
             """
         )
 
+
+    # --------------------------------------------------------
+    # GRIGLIA
+    # --------------------------------------------------------
 
     with st.expander(
         "Griglia e indicatori"
@@ -1338,6 +1297,10 @@ Numero delle categorie funzionali presenti nell'unità spaziale.
         )
 
 
+    # --------------------------------------------------------
+    # AUTOCORRELAZIONE
+    # --------------------------------------------------------
+
     with st.expander(
         "Autocorrelazione spaziale"
     ):
@@ -1358,6 +1321,10 @@ L'analisi LISA distingue i cluster locali **HH, LL, HL e LH**.
         )
 
 
+    # --------------------------------------------------------
+    # QUARTIERI
+    # --------------------------------------------------------
+
     with st.expander(
         "Scala dei quartieri"
     ):
@@ -1375,6 +1342,10 @@ Dei **7.975 POI** complessivi:
             """
         )
 
+
+    # --------------------------------------------------------
+    # POPOLAZIONE
+    # --------------------------------------------------------
 
     with st.expander(
         "Popolazione e densità"
@@ -1400,6 +1371,10 @@ La densità abitativa è calcolata come residenti per km².
             """
         )
 
+
+    # --------------------------------------------------------
+    # SARAGOZZA
+    # --------------------------------------------------------
 
     with st.expander(
         "Riferimento a spatial_diversity"
