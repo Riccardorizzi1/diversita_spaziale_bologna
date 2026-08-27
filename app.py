@@ -9,7 +9,7 @@
 # "Accessibilità della popolazione agli
 # equipaggiamenti culturali"
 #
-# VERSIONE COMPLETA
+# VERSIONE COMPLETA DEFINITIVA
 # ============================================================
 
 from pathlib import Path
@@ -33,12 +33,6 @@ from PIL import (
 # ============================================================
 # 1. CONFIGURAZIONE STREAMLIT
 # ============================================================
-#
-# Sidebar aperta di default.
-#
-# La sidebar verrà inoltre resa strutturalmente
-# permanente tramite CSS.
-# ============================================================
 
 st.set_page_config(
     page_title="Diversità Spaziale Urbana",
@@ -61,15 +55,6 @@ ROOT = (
 
 # ============================================================
 # 3. CONFIGURAZIONE CITTÀ
-# ============================================================
-#
-# Un unico motore dashboard.
-#
-# Bologna e Firenze differiscono solo per:
-# - file;
-# - risultati specifici;
-# - anno popolazione;
-# - note metodologiche specifiche.
 # ============================================================
 
 CONFIG = {
@@ -213,59 +198,7 @@ CONFIG = {
 
 
 # ============================================================
-# 4. COLORI DASHBOARD
-# ============================================================
-#
-# Palette ripresa dall'impostazione visiva della dashboard
-# "Accessibilità della popolazione agli
-# equipaggiamenti culturali".
-#
-# SIDEBAR:
-# blu scuro -> petrolio -> azzurro
-#
-# MAIN:
-# azzurro chiarissimo -> azzurro
-#
-# CARD:
-# bianco
-#
-# TESTO:
-# blu navy
-# ============================================================
-
-NAVY_TESTO = "#0B2942"
-
-SIDEBAR_TOP = "#133D55"
-
-SIDEBAR_MID = "#155974"
-
-SIDEBAR_BOTTOM = "#269ABA"
-
-MAIN_LEFT = "#C6F0F6"
-
-MAIN_MID = "#9EE4F1"
-
-MAIN_RIGHT = "#5EC8E6"
-
-CARD = "#FDFEFF"
-
-BIANCO = "#FFFFFF"
-
-TESTO_SECONDARIO = "#466777"
-
-BORDO_CHIARO = "#D5E7EC"
-
-AZZURRO_ACCENTO = "#52C5E4"
-
-AZZURRO_SELEZIONE = "#35AFD1"
-
-ROSSO_SELEZIONE = "#FF5A64"
-
-OMBRA = "rgba(11, 41, 66, 0.10)"
-
-
-# ============================================================
-# 5. LOGO SBL
+# 4. LOGO SBL
 # ============================================================
 
 NOMI_LOGO = [
@@ -298,19 +231,7 @@ URL_SBL = (
 
 
 # ============================================================
-# 6. PREPARAZIONE LOGO HD
-# ============================================================
-#
-# Il logo:
-#
-# - non viene sovrascritto;
-# - viene ritagliato automaticamente;
-# - viene portato ad alta risoluzione;
-# - viene ricampionato con LANCZOS;
-# - riceve una leggera correzione di contrasto;
-# - riceve una Unsharp Mask controllata.
-#
-# L'immagine finale rimane in memoria.
+# 5. PREPARAZIONE LOGO HD
 # ============================================================
 
 @st.cache_data(
@@ -330,7 +251,7 @@ def prepara_logo_hd(
 
 
         # ----------------------------------------------------
-        # Fondo bianco per identificazione bbox
+        # Identificazione automatica del contenuto
         # ----------------------------------------------------
 
         rgb = Image.new(
@@ -346,7 +267,7 @@ def prepara_logo_hd(
         )
 
 
-        fondo = Image.new(
+        sfondo = Image.new(
             "RGB",
             rgb.size,
             "white",
@@ -356,7 +277,7 @@ def prepara_logo_hd(
         differenza = (
             ImageChops.difference(
                 rgb,
-                fondo,
+                sfondo,
             )
         )
 
@@ -445,11 +366,11 @@ def prepara_logo_hd(
 
 
         # ----------------------------------------------------
-        # Alta risoluzione
+        # Upscaling ad alta risoluzione
         # ----------------------------------------------------
 
         larghezza_target = max(
-            1800,
+            2000,
             img.width,
         )
 
@@ -483,7 +404,7 @@ def prepara_logo_hd(
 
 
         # ----------------------------------------------------
-        # Contrasto controllato
+        # Correzioni leggere
         # ----------------------------------------------------
 
         img = (
@@ -497,22 +418,14 @@ def prepara_logo_hd(
         )
 
 
-        # ----------------------------------------------------
-        # Unsharp Mask
-        # ----------------------------------------------------
-
         img = img.filter(
             ImageFilter.UnsharpMask(
                 radius=1.3,
-                percent=140,
+                percent=145,
                 threshold=3,
             )
         )
 
-
-        # ----------------------------------------------------
-        # Nitidezza finale
-        # ----------------------------------------------------
 
         img = (
             ImageEnhance
@@ -545,7 +458,7 @@ def prepara_logo_hd(
 
 
 # ============================================================
-# 7. LOGO HD
+# 6. LOGO HD
 # ============================================================
 
 logo_hd = None
@@ -574,18 +487,240 @@ if FILE_LOGO is not None:
 
 
 # ============================================================
-# 8. CSS COMPLETO
+# 7. SIDEBAR - LOGO
+# ============================================================
+
+if logo_hd is not None:
+
+    st.sidebar.image(
+        logo_hd,
+        width=128,
+        link=URL_SBL,
+    )
+
+else:
+
+    st.sidebar.link_button(
+        "SBL Consultancy",
+        URL_SBL,
+    )
+
+
+st.sidebar.markdown(
+    """
+### Diversità spaziale
+
+Popolazione, funzioni urbane  
+e mixité territoriale
+"""
+)
+
+
+st.sidebar.markdown(
+    "---"
+)
+
+
+# ============================================================
+# 8. SELEZIONE TERRITORIALE
+# ============================================================
+
+st.sidebar.markdown(
+    "### Selezione territoriale"
+)
+
+
+citta = st.sidebar.radio(
+    "Comune",
+    [
+        "Bologna",
+        "Firenze",
+    ],
+    index=0,
+    key="selezione_citta",
+)
+
+
+cfg = (
+    CONFIG[
+        citta
+    ]
+)
+
+
+# ============================================================
+# 9. MODALITÀ DARK
+# ============================================================
+
+st.sidebar.markdown(
+    "---"
+)
+
+
+st.sidebar.markdown(
+    "### Visualizzazione"
+)
+
+
+dark_mode = st.sidebar.toggle(
+    "Modalità scura",
+    value=False,
+    key="modalita_scura",
+)
+
+
+# ============================================================
+# 10. INFORMAZIONI SIDEBAR
+# ============================================================
+
+st.sidebar.markdown(
+    "---"
+)
+
+
+st.sidebar.markdown(
+    "### Area selezionata"
+)
+
+
+st.sidebar.markdown(
+    f"**Comune di {citta}**"
+)
+
+
+st.sidebar.caption(
+    cfg[
+        "fonte"
+    ]
+)
+
+
+# ============================================================
+# 11. PALETTE
 # ============================================================
 #
-# PUNTI IMPORTANTI:
+# LIGHT MODE:
+# coerente con la dashboard Accessibilità.
 #
-# 1. nessuna banda superiore Streamlit;
-# 2. sidebar sempre visibile;
-# 3. sidebar non collassabile;
-# 4. nessuno spazio vuoto superiore;
-# 5. colori uguali all'impostazione Accessibilità;
-# 6. main content su gradiente azzurro;
-# 7. card bianche.
+# DARK MODE:
+# stessa identità SBL in versione navy/petrolio.
+# ============================================================
+
+NAVY = "#082B46"
+
+NAVY_MEDIO = "#123F59"
+
+PETROLIO = "#17627D"
+
+AZZURRO = "#28A5C7"
+
+AZZURRO_CHIARO = "#8CDCEA"
+
+ROSSO_ACCENTO = "#FF5964"
+
+BIANCO = "#FFFFFF"
+
+
+if dark_mode:
+
+    # --------------------------------------------------------
+    # DARK MODE
+    # --------------------------------------------------------
+
+    SIDEBAR_TOP = "#071F31"
+
+    SIDEBAR_MID = "#0E4058"
+
+    SIDEBAR_BOTTOM = "#126982"
+
+
+    MAIN_LEFT = "#071822"
+
+    MAIN_MID = "#0C2B39"
+
+    MAIN_RIGHT = "#10475B"
+
+
+    CARD = "#102D3B"
+
+    CARD_SECONDARIA = "#133847"
+
+    CARD_SOFT = "rgba(16, 45, 59, 0.96)"
+
+
+    TESTO_MAIN = "#F3FAFC"
+
+    TESTO_SECONDARIO = "#BBD2DC"
+
+    TESTO_CARD = "#F3FAFC"
+
+
+    BORDO = "#315462"
+
+    BORDO_SOFT = "#294A58"
+
+
+    TABELLA_HEADER = "#092B40"
+
+    TABELLA_RIGA = "#102D3B"
+
+
+    OMBRA = (
+        "rgba(0, 0, 0, 0.28)"
+    )
+
+
+else:
+
+    # --------------------------------------------------------
+    # LIGHT MODE
+    # --------------------------------------------------------
+
+    SIDEBAR_TOP = "#153F57"
+
+    SIDEBAR_MID = "#17627E"
+
+    SIDEBAR_BOTTOM = "#259BBA"
+
+
+    MAIN_LEFT = "#C7F1F6"
+
+    MAIN_MID = "#9FE5F0"
+
+    MAIN_RIGHT = "#5BC6E2"
+
+
+    CARD = "#FDFEFF"
+
+    CARD_SECONDARIA = "#F7FCFD"
+
+    CARD_SOFT = "rgba(253, 254, 255, 0.96)"
+
+
+    TESTO_MAIN = "#082B46"
+
+    TESTO_SECONDARIO = "#416779"
+
+    TESTO_CARD = "#082B46"
+
+
+    BORDO = "#D4E7EC"
+
+    BORDO_SOFT = "#DFEDF1"
+
+
+    TABELLA_HEADER = "#153F57"
+
+    TABELLA_RIGA = "#FFFFFF"
+
+
+    OMBRA = (
+        "rgba(8, 43, 70, 0.10)"
+    )
+
+
+# ============================================================
+# 12. CSS COMPLETO
 # ============================================================
 
 st.html(
@@ -593,7 +728,7 @@ st.html(
     <style>
 
     /* ======================================================
-       RESET BASE
+       RESET
        ====================================================== */
 
     html,
@@ -605,17 +740,29 @@ st.html(
         padding:
             0 !important;
 
-        background:
-            {MAIN_LEFT} !important;
+        font-family:
+            Arial,
+            Helvetica,
+            sans-serif !important;
 
     }}
 
 
     /* ======================================================
-       ELIMINAZIONE BANDA SUPERIORE STREAMLIT
+       ELIMINAZIONE COMPLETA HEADER STREAMLIT
+       ======================================================
+       
+       La sidebar viene mantenuta permanentemente aperta
+       tramite CSS e non dipende dal pulsante dell'header.
        ====================================================== */
 
     header[data-testid="stHeader"] {{
+
+        display:
+            none !important;
+
+        visibility:
+            hidden !important;
 
         height:
             0 !important;
@@ -625,12 +772,6 @@ st.html(
 
         max-height:
             0 !important;
-
-        background:
-            transparent !important;
-
-        border:
-            none !important;
 
     }}
 
@@ -657,7 +798,8 @@ st.html(
 
 
     /* ======================================================
-       SIDEBAR SEMPRE APERTA
+       SIDEBAR
+       SEMPRE VISIBILE / NON COLLASSABILE
        ====================================================== */
 
     section[data-testid="stSidebar"] {{
@@ -669,7 +811,7 @@ st.html(
             visible !important;
 
         transform:
-            none !important;
+            translateX(0) !important;
 
         left:
             0 !important;
@@ -677,20 +819,23 @@ st.html(
         margin-left:
             0 !important;
 
+        opacity:
+            1 !important;
+
         min-width:
-            355px !important;
+            350px !important;
 
         width:
-            355px !important;
+            350px !important;
 
         max-width:
-            355px !important;
+            350px !important;
 
         background:
             linear-gradient(
                 180deg,
                 {SIDEBAR_TOP} 0%,
-                {SIDEBAR_MID} 48%,
+                {SIDEBAR_MID} 52%,
                 {SIDEBAR_BOTTOM} 100%
             )
             !important;
@@ -701,32 +846,36 @@ st.html(
                 255,
                 255,
                 255,
-                0.16
+                0.15
             )
             !important;
 
         box-shadow:
             5px 0 18px
             rgba(
-                11,
-                41,
-                66,
-                0.12
-            );
+                0,
+                0,
+                0,
+                0.10
+            )
+            !important;
 
     }}
 
 
     section[data-testid="stSidebar"] > div {{
 
-        width:
-            355px !important;
-
         min-width:
-            355px !important;
+            350px !important;
+
+        width:
+            350px !important;
 
         max-width:
-            355px !important;
+            350px !important;
+
+        transform:
+            none !important;
 
     }}
 
@@ -743,19 +892,22 @@ st.html(
     [data-testid="stSidebarUserContent"] {{
 
         padding-top:
-            2.1rem !important;
+            1.8rem !important;
 
         padding-left:
-            1.4rem !important;
+            1.35rem !important;
 
         padding-right:
-            1.4rem !important;
+            1.35rem !important;
+
+        padding-bottom:
+            2rem !important;
 
     }}
 
 
     /* ======================================================
-       DISABILITAZIONE COLLASSO SIDEBAR
+       DISABILITAZIONE CONTROLLI COLLASSO
        ====================================================== */
 
     [data-testid="stSidebarCollapseButton"],
@@ -779,9 +931,12 @@ st.html(
     section[data-testid="stSidebar"] h2,
     section[data-testid="stSidebar"] h3,
     section[data-testid="stSidebar"] h4,
+    section[data-testid="stSidebar"] h5,
     section[data-testid="stSidebar"] p,
     section[data-testid="stSidebar"] span,
-    section[data-testid="stSidebar"] label {{
+    section[data-testid="stSidebar"] label,
+    section[data-testid="stSidebar"]
+    [data-testid="stMarkdownContainer"] {{
 
         color:
             white !important;
@@ -797,7 +952,7 @@ st.html(
                 255,
                 255,
                 255,
-                0.78
+                0.76
             )
             !important;
 
@@ -815,15 +970,34 @@ st.html(
                 255,
                 255,
                 255,
-                0.25
+                0.27
             )
             !important;
 
         margin-top:
-            1.4rem !important;
+            1.35rem !important;
 
         margin-bottom:
-            1.4rem !important;
+            1.35rem !important;
+
+    }}
+
+
+    /* ======================================================
+       LOGO SIDEBAR
+       ====================================================== */
+
+    section[data-testid="stSidebar"]
+    [data-testid="stImage"] img {{
+
+        image-rendering:
+            auto !important;
+
+        backface-visibility:
+            hidden;
+
+        transform:
+            translateZ(0);
 
     }}
 
@@ -836,7 +1010,7 @@ st.html(
     [data-testid="stRadio"] > div {{
 
         gap:
-            0.55rem !important;
+            0.45rem !important;
 
     }}
 
@@ -844,11 +1018,8 @@ st.html(
     section[data-testid="stSidebar"]
     [data-testid="stRadio"] label {{
 
-        width:
-            100% !important;
-
         min-height:
-            52px !important;
+            48px !important;
 
         display:
             flex !important;
@@ -857,11 +1028,8 @@ st.html(
             center !important;
 
         padding:
-            0.7rem
-            0.9rem !important;
-
-        border-radius:
-            11px !important;
+            0.6rem
+            0.8rem !important;
 
         border:
             1px solid
@@ -869,9 +1037,12 @@ st.html(
                 255,
                 255,
                 255,
-                0.20
+                0.19
             )
             !important;
+
+        border-radius:
+            10px !important;
 
         background:
             rgba(
@@ -881,9 +1052,6 @@ st.html(
                 0.06
             )
             !important;
-
-        transition:
-            0.15s ease !important;
 
     }}
 
@@ -900,41 +1068,6 @@ st.html(
             )
             !important;
 
-        border-color:
-            rgba(
-                255,
-                255,
-                255,
-                0.38
-            )
-            !important;
-
-    }}
-
-
-    section[data-testid="stSidebar"]
-    [data-testid="stRadio"]
-    label:has(input:checked) {{
-
-        background:
-            rgba(
-                80,
-                198,
-                228,
-                0.24
-            )
-            !important;
-
-        border:
-            1px solid
-            rgba(
-                126,
-                220,
-                240,
-                0.70
-            )
-            !important;
-
     }}
 
 
@@ -942,13 +1075,47 @@ st.html(
     input[type="radio"] {{
 
         accent-color:
-            {ROSSO_SELEZIONE} !important;
+            {ROSSO_ACCENTO} !important;
 
     }}
 
 
     /* ======================================================
-       APP / MAIN
+       TOGGLE DARK MODE
+       ====================================================== */
+
+    section[data-testid="stSidebar"]
+    [data-testid="stToggle"] {{
+
+        background:
+            rgba(
+                255,
+                255,
+                255,
+                0.05
+            );
+
+        border:
+            1px solid
+            rgba(
+                255,
+                255,
+                255,
+                0.16
+            );
+
+        border-radius:
+            10px;
+
+        padding:
+            0.7rem
+            0.8rem;
+
+    }}
+
+
+    /* ======================================================
+       APP PRINCIPALE
        ====================================================== */
 
     .stApp,
@@ -959,13 +1126,14 @@ st.html(
             linear-gradient(
                 100deg,
                 {MAIN_LEFT} 0%,
-                {MAIN_MID} 45%,
+                {MAIN_MID} 47%,
                 {MAIN_RIGHT} 100%
             )
             !important;
 
         color:
-            {NAVY_TESTO} !important;
+            {TESTO_MAIN}
+            !important;
 
     }}
 
@@ -979,16 +1147,16 @@ st.html(
 
 
     /* ======================================================
-       CONTENUTO PRINCIPALE
+       CONTENITORE PRINCIPALE
        ====================================================== */
 
     .block-container {{
 
         max-width:
-            1540px !important;
+            1550px !important;
 
         padding-top:
-            1.55rem !important;
+            2.3rem !important;
 
         padding-bottom:
             3.5rem !important;
@@ -1003,7 +1171,7 @@ st.html(
 
 
     /* ======================================================
-       TESTI MAIN
+       TITOLI E TESTI MAIN
        ====================================================== */
 
     [data-testid="stMain"] h1,
@@ -1014,7 +1182,8 @@ st.html(
     [data-testid="stMain"] h6 {{
 
         color:
-            {NAVY_TESTO} !important;
+            {TESTO_MAIN}
+            !important;
 
     }}
 
@@ -1022,10 +1191,12 @@ st.html(
     [data-testid="stMain"] p,
     [data-testid="stMain"] li,
     [data-testid="stMain"] label,
+    [data-testid="stMain"]
     [data-testid="stMarkdownContainer"] {{
 
         color:
-            {NAVY_TESTO} !important;
+            {TESTO_MAIN}
+            !important;
 
     }}
 
@@ -1034,39 +1205,37 @@ st.html(
     [data-testid="stCaptionContainer"] {{
 
         color:
-            {TESTO_SECONDARIO} !important;
+            {TESTO_SECONDARIO}
+            !important;
 
     }}
 
 
     /* ======================================================
-       KPI
+       KPI CARD
        ====================================================== */
 
     [data-testid="stMetric"] {{
 
         background:
-            {CARD} !important;
+            {CARD}
+            !important;
 
         border:
             1px solid
-            rgba(
-                255,
-                255,
-                255,
-                0.60
-            )
+            {BORDO}
             !important;
 
         border-radius:
             16px !important;
 
-        padding:
-            1.15rem
-            1.35rem !important;
-
         min-height:
             128px !important;
+
+        padding:
+            1.15rem
+            1.35rem
+            !important;
 
         box-shadow:
             0 5px 14px
@@ -1080,13 +1249,16 @@ st.html(
     [data-testid="stMetricLabel"] p {{
 
         color:
-            {NAVY_TESTO} !important;
-
-        font-weight:
-            500 !important;
+            {TESTO_CARD}
+            !important;
 
         font-size:
-            0.98rem !important;
+            0.97rem
+            !important;
+
+        font-weight:
+            500
+            !important;
 
     }}
 
@@ -1094,16 +1266,20 @@ st.html(
     [data-testid="stMetricValue"] {{
 
         color:
-            {NAVY_TESTO} !important;
+            {TESTO_CARD}
+            !important;
 
         font-size:
-            2.25rem !important;
+            2.25rem
+            !important;
 
         line-height:
-            1.1 !important;
+            1.1
+            !important;
 
         font-weight:
-            760 !important;
+            780
+            !important;
 
     }}
 
@@ -1117,16 +1293,11 @@ st.html(
     [data-testid="stExpander"] summary {{
 
         background:
-            rgba(
-                253,
-                254,
-                255,
-                0.96
-            )
+            {CARD}
             !important;
 
         color:
-            {NAVY_TESTO}
+            {TESTO_CARD}
             !important;
 
     }}
@@ -1136,25 +1307,17 @@ st.html(
 
         border:
             1px solid
-            rgba(
-                255,
-                255,
-                255,
-                0.70
-            )
+            {BORDO}
             !important;
 
         border-radius:
-            13px !important;
+            13px
+            !important;
 
         box-shadow:
             0 3px 10px
-            rgba(
-                11,
-                41,
-                66,
-                0.06
-            );
+            {OMBRA}
+            !important;
 
     }}
 
@@ -1162,10 +1325,12 @@ st.html(
     [data-testid="stExpander"] summary *,
     [data-testid="stExpander"] p,
     [data-testid="stExpander"] li,
-    [data-testid="stExpander"] strong {{
+    [data-testid="stExpander"] strong,
+    [data-testid="stExpander"]
+    [data-testid="stMarkdownContainer"] {{
 
         color:
-            {NAVY_TESTO}
+            {TESTO_CARD}
             !important;
 
     }}
@@ -1178,16 +1343,20 @@ st.html(
     [data-testid="stImage"] img {{
 
         border-radius:
-            10px !important;
+            10px
+            !important;
 
     }}
 
 
     /* ======================================================
-       IFRAME MAPPA
+       MAPPA
        ====================================================== */
 
     iframe {{
+
+        border:
+            none !important;
 
         border-radius:
             12px !important;
@@ -1197,12 +1366,7 @@ st.html(
 
         box-shadow:
             0 5px 15px
-            rgba(
-                11,
-                41,
-                66,
-                0.10
-            )
+            {OMBRA}
             !important;
 
     }}
@@ -1262,95 +1426,7 @@ st.html(
 
 
 # ============================================================
-# 9. HEADER SIDEBAR
-# ============================================================
-
-if logo_hd is not None:
-
-    st.sidebar.image(
-        logo_hd,
-        width=125,
-        link=URL_SBL,
-    )
-
-else:
-
-    st.sidebar.link_button(
-        "SBL Consultancy",
-        URL_SBL,
-    )
-
-
-st.sidebar.markdown(
-    """
-### Diversità spaziale
-
-Popolazione, funzioni urbane  
-e mixité territoriale
-"""
-)
-
-
-st.sidebar.markdown(
-    "---"
-)
-
-
-# ============================================================
-# 10. SELEZIONE TERRITORIALE
-# ============================================================
-
-st.sidebar.markdown(
-    "### Selezione territoriale"
-)
-
-
-citta = st.sidebar.radio(
-    "Comune",
-    [
-        "Bologna",
-        "Firenze",
-    ],
-    index=0,
-    key="selezione_citta",
-)
-
-
-cfg = (
-    CONFIG[
-        citta
-    ]
-)
-
-
-# ============================================================
-# 11. INFORMAZIONI SIDEBAR
-# ============================================================
-
-st.sidebar.markdown(
-    "---"
-)
-
-
-st.sidebar.markdown(
-    "### Area selezionata"
-)
-
-
-st.sidebar.markdown(
-    f"**Comune di {citta}**"
-)
-
-
-st.sidebar.caption(
-    cfg[
-        "fonte"
-    ]
-)
-
-
-# ============================================================
-# 12. CONTROLLO FILE
+# 13. CONTROLLO FILE
 # ============================================================
 
 FILE_NECESSARI = [
@@ -1428,7 +1504,7 @@ if file_mancanti:
 
 
 # ============================================================
-# 13. FUNZIONI LETTURA DATI
+# 14. FUNZIONI LETTURA
 # ============================================================
 
 @st.cache_data(
@@ -1467,7 +1543,7 @@ def carica_summary(
 
 
 # ============================================================
-# 14. LETTURA DATI
+# 15. LETTURA DATI
 # ============================================================
 
 with st.spinner(
@@ -1511,7 +1587,7 @@ with st.spinner(
 
 
 # ============================================================
-# 15. KPI BASE
+# 16. KPI BASE
 # ============================================================
 
 n_poi = len(
@@ -1539,7 +1615,7 @@ n_celle_lisa = len(
 
 
 # ============================================================
-# 16. KPI SPECIFICI
+# 17. KPI SPECIFICI
 # ============================================================
 
 if citta == "Firenze":
@@ -1638,11 +1714,13 @@ else:
         ]
     )
 
+
     moran_p = (
         cfg[
             "moran_p"
         ]
     )
+
 
     n_celle_moran = (
         cfg[
@@ -1650,11 +1728,13 @@ else:
         ]
     )
 
+
     poi_quartieri = (
         cfg[
             "poi_quartieri"
         ]
     )
+
 
     poi_fuori_quartieri = (
         cfg[
@@ -1662,11 +1742,13 @@ else:
         ]
     )
 
+
     residenti_quartieri = (
         cfg[
             "residenti_quartieri"
         ]
     )
+
 
     residenti_non_indicato = (
         cfg[
@@ -1674,11 +1756,13 @@ else:
         ]
     )
 
+
     residenti_comune = (
         cfg[
             "residenti_comune"
         ]
     )
+
 
     anno_popolazione = (
         cfg[
@@ -1688,7 +1772,7 @@ else:
 
 
 # ============================================================
-# 17. FORMATI ITALIANI
+# 18. FORMATI ITALIANI
 # ============================================================
 
 def formato_intero(
@@ -1740,16 +1824,7 @@ def formato_densita(
 
 
 # ============================================================
-# 18. HEADER PRINCIPALE
-# ============================================================
-#
-# Nessun rettangolo scuro.
-#
-# Come nella dashboard Accessibilità:
-# - logo a sinistra;
-# - titolo navy;
-# - sottotitolo;
-# - tutto direttamente sullo sfondo azzurro.
+# 19. HEADER PRINCIPALE
 # ============================================================
 
 if logo_base64 is not None:
@@ -1765,7 +1840,6 @@ if logo_base64 is not None:
                 background:white;
                 width:90px;
                 height:90px;
-                border-radius:2px;
                 flex:0 0 90px;
                 overflow:hidden;
             "
@@ -1795,8 +1869,11 @@ st.html(
             display:flex;
             align-items:flex-start;
             gap:18px;
-            margin-bottom:34px;
-            padding-top:8px;
+
+            padding-top:4px;
+            padding-bottom:10px;
+
+            margin-bottom:20px;
         "
     >
 
@@ -1812,11 +1889,16 @@ st.html(
 
             <div
                 style="
-                    color:{NAVY_TESTO};
+                    color:{TESTO_MAIN};
+
                     font-size:42px;
+
                     line-height:1.12;
+
                     font-weight:800;
-                    letter-spacing:-0.7px;
+
+                    letter-spacing:-0.6px;
+
                     margin-bottom:14px;
                 "
             >
@@ -1826,16 +1908,20 @@ st.html(
 
             <div
                 style="
-                    color:{NAVY_TESTO};
+                    color:{TESTO_MAIN};
+
                     font-size:17px;
+
                     line-height:1.65;
-                    max-width:1120px;
+
+                    max-width:1150px;
                 "
             >
-                Analisi della mixité funzionale urbana
-                attraverso Points of Interest,
-                indici di diversità e
-                autocorrelazione spaziale.
+                Dashboard interattiva per l'analisi
+                della mixité funzionale urbana attraverso
+                Points of Interest, indicatori di diversità,
+                confronti territoriali e autocorrelazione
+                spaziale.
             </div>
 
         </div>
@@ -1846,7 +1932,7 @@ st.html(
 
 
 # ============================================================
-# 19. QUADRO GENERALE
+# 20. CITTÀ
 # ============================================================
 
 st.markdown(
@@ -1854,14 +1940,14 @@ st.markdown(
 )
 
 
+# ============================================================
+# 21. KPI PRINCIPALI
+# ============================================================
+
 st.markdown(
     "## KPI principali"
 )
 
-
-# ============================================================
-# 20. KPI - PRIMA RIGA
-# ============================================================
 
 c1, c2, c3, c4 = (
     st.columns(
@@ -1913,10 +1999,6 @@ with c4:
 
 st.write("")
 
-
-# ============================================================
-# 21. KPI - SECONDA RIGA
-# ============================================================
 
 c5, c6, c7 = (
     st.columns(
@@ -2007,12 +2089,11 @@ st.html(
     <div
         style="
             background:
-                rgba(
-                    253,
-                    254,
-                    255,
-                    0.96
-                );
+                {CARD_SOFT};
+
+            border:
+                1px solid
+                {BORDO};
 
             border-radius:
                 14px;
@@ -2028,7 +2109,7 @@ st.html(
                 {OMBRA};
 
             color:
-                {NAVY_TESTO};
+                {TESTO_CARD};
         "
     >
 
@@ -2060,8 +2141,7 @@ st.html(
 
             L'indice di Shannon misura
             l'equilibrio nella distribuzione
-            delle otto categorie funzionali
-            di POI.
+            delle otto categorie funzionali di POI.
 
             Valori più elevati indicano
             una maggiore diversità funzionale
@@ -2348,10 +2428,15 @@ st.html(
     f"""
     <div
         style="
-            overflow-x:auto;
+            overflow-x:
+                auto;
 
             background:
                 {CARD};
+
+            border:
+                1px solid
+                {BORDO};
 
             border-radius:
                 15px;
@@ -2362,15 +2447,25 @@ st.html(
 
             margin-bottom:
                 25px;
+
+            color:
+                {TESTO_CARD};
         "
     >
 
         <table
             style="
-                width:100%;
-                border-collapse:collapse;
-                color:{NAVY_TESTO};
-                font-size:14px;
+                width:
+                    100%;
+
+                border-collapse:
+                    collapse;
+
+                color:
+                    {TESTO_CARD};
+
+                font-size:
+                    14px;
             "
         >
 
@@ -2379,7 +2474,7 @@ st.html(
                 <tr
                     style="
                         background:
-                            {SIDEBAR_TOP};
+                            {TABELLA_HEADER};
 
                         color:
                             white;
@@ -2453,7 +2548,10 @@ st.html(
 
             border-bottom:
                 1px solid
-                {BORDO_CHIARO};
+                {BORDO_SOFT};
+
+            background:
+                {TABELLA_RIGA};
 
         }}
 
@@ -2543,12 +2641,11 @@ st.html(
     <div
         style="
             background:
-                rgba(
-                    253,
-                    254,
-                    255,
-                    0.94
-                );
+                {CARD_SOFT};
+
+            border:
+                1px solid
+                {BORDO};
 
             border-radius:
                 14px;
@@ -2563,7 +2660,7 @@ st.html(
                 28px;
 
             color:
-                {NAVY_TESTO};
+                {TESTO_CARD};
 
             line-height:
                 1.65;
