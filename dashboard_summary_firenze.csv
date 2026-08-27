@@ -1,0 +1,15 @@
+metrica,valore
+n_poi,9088.0
+n_celle,425.0
+n_quartieri,5.0
+n_categorie,8.0
+n_celle_lisa,386.0
+n_celle_moran,386.0
+moran_i,0.11526870496296965
+moran_p,0.001
+poi_quartieri,9072.0
+poi_fuori_quartieri,16.0
+residenti_quartieri,8145.0
+residenti_non_indicato,0.0
+residenti_comune,8145.0
+anno_popolazione,2025.0
