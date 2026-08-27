@@ -2,9 +2,8 @@
 # DIVERSITÀ SPAZIALE URBANA
 # BOLOGNA + FIRENZE
 #
-# Dashboard Streamlit multiscala / multi-città
-#
-# VERSIONE COMPLETA
+# Dashboard Streamlit multi-città
+# VERSIONE COMPLETA DEFINITIVA
 # ============================================================
 
 from pathlib import Path
@@ -36,7 +35,7 @@ st.set_page_config(
 
 
 # ============================================================
-# 2. ROOT REPOSITORY
+# 2. ROOT DEL REPOSITORY
 # ============================================================
 
 ROOT = Path(__file__).resolve().parent
@@ -46,14 +45,10 @@ ROOT = Path(__file__).resolve().parent
 # 3. CONFIGURAZIONE DELLE CITTÀ
 # ============================================================
 #
-# La dashboard utilizza un unico motore.
+# Un unico motore dashboard.
 #
-# Bologna e Firenze differiscono esclusivamente per:
-# - file;
-# - valori metodologici specifici;
-# - anno popolazione;
-# - numero di quartieri;
-# - eventuali note territoriali specifiche.
+# Le differenze tra Bologna e Firenze sono gestite
+# esclusivamente tramite configurazione.
 # ============================================================
 
 CONFIG = {
@@ -194,9 +189,7 @@ CONFIG = {
             2025,
 
         "fonte":
-            (
-                "OpenStreetMap / Comune di Firenze / ISTAT"
-            ),
+            "OpenStreetMap / Comune di Firenze / ISTAT",
 
         "nota_cartografica":
             (
@@ -204,8 +197,8 @@ CONFIG = {
                 "sono armonizzate al perimetro comunale "
                 "esclusivamente nella visualizzazione "
                 "cartografica. I dati territoriali "
-                "originali, l'assegnazione dei POI e gli "
-                "indicatori non vengono modificati."
+                "originali, l'assegnazione dei POI "
+                "e gli indicatori non vengono modificati."
             ),
     },
 }
@@ -263,6 +256,10 @@ def prepara_logo_hd(
             "RGBA"
         )
 
+
+        # ----------------------------------------------------
+        # Rimozione spazio bianco
+        # ----------------------------------------------------
 
         rgb = Image.new(
             "RGB",
@@ -336,30 +333,41 @@ def prepara_logo_hd(
                 ),
             )
 
+
+            sx = max(
+                0,
+                sx - padding_x,
+            )
+
+            alto = max(
+                0,
+                alto - padding_y,
+            )
+
+            dx = min(
+                img.width,
+                dx + padding_x,
+            )
+
+            basso = min(
+                img.height,
+                basso + padding_y,
+            )
+
+
             img = img.crop(
                 (
-                    max(
-                        0,
-                        sx - padding_x,
-                    ),
-
-                    max(
-                        0,
-                        alto - padding_y,
-                    ),
-
-                    min(
-                        img.width,
-                        dx + padding_x,
-                    ),
-
-                    min(
-                        img.height,
-                        basso + padding_y,
-                    ),
+                    sx,
+                    alto,
+                    dx,
+                    basso,
                 )
             )
 
+
+        # ----------------------------------------------------
+        # Upscaling
+        # ----------------------------------------------------
 
         larghezza_target = max(
             1600,
@@ -395,6 +403,10 @@ def prepara_logo_hd(
             )
 
 
+        # ----------------------------------------------------
+        # Contrasto e nitidezza
+        # ----------------------------------------------------
+
         img = (
             ImageEnhance
             .Contrast(
@@ -426,6 +438,10 @@ def prepara_logo_hd(
         )
 
 
+        # ----------------------------------------------------
+        # Salvataggio in memoria
+        # ----------------------------------------------------
+
         buffer = BytesIO()
 
 
@@ -440,7 +456,7 @@ def prepara_logo_hd(
 
 
 # ============================================================
-# 6. LOGO SIDEBAR
+# 6. LOGO NELLA SIDEBAR
 # ============================================================
 
 if FILE_LOGO is not None:
@@ -467,11 +483,11 @@ else:
 
 
 # ============================================================
-# 7. SELETTORE CITTÀ
+# 7. SELEZIONE CITTÀ
 # ============================================================
 
-st.sidebar.markdown(
-    "### Area di analisi"
+st.sidebar.title(
+    "Area di analisi"
 )
 
 
@@ -486,16 +502,20 @@ citta = st.sidebar.radio(
 )
 
 
-cfg = CONFIG[
-    citta
-]
+cfg = (
+    CONFIG[
+        citta
+    ]
+)
 
 
 # ============================================================
 # 8. MODALITÀ LIGHT / DARK
 # ============================================================
 
-st.sidebar.markdown("---")
+st.sidebar.markdown(
+    "---"
+)
 
 
 dark_mode = st.sidebar.toggle(
@@ -506,55 +526,56 @@ dark_mode = st.sidebar.toggle(
 
 
 # ============================================================
-# 9. PALETTE DASHBOARD
+# 9. PALETTE SBL
 # ============================================================
 #
-# Palette adattata al riferimento grafico fornito:
+# Palette costruita sul riferimento grafico SBL:
 #
-# - blu petrolio / navy
+# - blu navy
+# - blu petrolio
 # - azzurro
 # - arancione
-# - superfici chiare e pulite
-#
-# Le stesse tonalità sono mantenute in dark mode.
+# - bianco
 # ============================================================
 
-BLU_NAVY = "#12344D"
+BLU_NAVY = "#16384F"
+
+BLU_PETROLIO = "#24536D"
 
 BLU = "#00649C"
 
-AZZURRO = "#45B7DD"
+AZZURRO = "#39AFD4"
 
-AZZURRO_CHIARO = "#BFE8F5"
+AZZURRO_CHIARO = "#BDE8F4"
 
-ARANCIONE = "#F3A33C"
+ARANCIONE = "#FF9828"
 
-ARANCIONE_CHIARO = "#F8D5A5"
+ARANCIONE_CHIARO = "#FFD29A"
 
 BIANCO = "#FFFFFF"
 
 
 # ============================================================
-# 10. COLORI INTERFACCIA
+# 10. COLORI DINAMICI INTERFACCIA
 # ============================================================
 
 if dark_mode:
 
-    SFONDO = "#101A23"
+    SFONDO = "#0E1821"
 
-    SIDEBAR = "#13232F"
+    SIDEBAR = "#142532"
 
-    CARD = "#182A36"
+    CARD = "#192C39"
 
-    CARD_SECONDARIA = "#203440"
+    CARD_SECONDARIA = "#203744"
 
     TESTO = "#F5F8FA"
 
-    TESTO_SECONDARIO = "#BDCBD4"
+    TESTO_SECONDARIO = "#B9C8D1"
 
-    BORDO = "#314A59"
+    BORDO = "#34505F"
 
-    LABEL = "#D6E1E7"
+    LABEL = "#D5E0E6"
 
     OMBRA = (
         "rgba(0,0,0,0.30)"
@@ -568,18 +589,18 @@ else:
 
     CARD = "#FFFFFF"
 
-    CARD_SECONDARIA = "#F0F7FA"
+    CARD_SECONDARIA = "#EFF7FA"
 
-    TESTO = "#18323F"
+    TESTO = "#173648"
 
-    TESTO_SECONDARIO = "#607785"
+    TESTO_SECONDARIO = "#677D89"
 
-    BORDO = "#D9E7ED"
+    BORDO = "#D8E6EC"
 
-    LABEL = "#41606E"
+    LABEL = "#3F5C6B"
 
     OMBRA = (
-        "rgba(18,52,77,0.08)"
+        "rgba(22,56,79,0.08)"
     )
 
 
@@ -591,12 +612,22 @@ st.html(
     f"""
     <style>
 
+    /* ======================================================
+       COLOR SCHEME
+       ====================================================== */
+
     :root {{
+
         color-scheme:
             {"dark" if dark_mode else "light"}
             !important;
+
     }}
 
+
+    /* ======================================================
+       APP GENERALE
+       ====================================================== */
 
     html,
     body,
@@ -610,10 +641,35 @@ st.html(
 
         color:
             {TESTO} !important;
+
     }}
 
 
-    header[data-testid="stHeader"],
+    /* ======================================================
+       HEADER STREAMLIT
+       NON VIENE ELIMINATO:
+       serve anche per il controllo della sidebar
+       ====================================================== */
+
+    header[data-testid="stHeader"] {{
+
+        background:
+            {SFONDO} !important;
+
+        color:
+            {TESTO} !important;
+
+        height:
+            3rem !important;
+
+    }}
+
+
+    /* ======================================================
+       NASCONDIAMO SOLO GLI ELEMENTI NON NECESSARI
+       SENZA ELIMINARE IL CONTROLLO SIDEBAR
+       ====================================================== */
+
     [data-testid="stToolbar"],
     [data-testid="stHeaderActionElements"],
     [data-testid="stDecoration"],
@@ -628,8 +684,29 @@ st.html(
 
         visibility:
             hidden !important;
+
     }}
 
+
+    /* ======================================================
+       CONTROLLO SIDEBAR SEMPRE ACCESSIBILE
+       ====================================================== */
+
+    [data-testid="stSidebarCollapseButton"],
+    [data-testid="collapsedControl"] {{
+
+        visibility:
+            visible !important;
+
+        display:
+            flex !important;
+
+    }}
+
+
+    /* ======================================================
+       CONTENUTO PRINCIPALE
+       ====================================================== */
 
     .block-container {{
 
@@ -637,7 +714,7 @@ st.html(
             1480px !important;
 
         padding-top:
-            1.25rem !important;
+            0.7rem !important;
 
         padding-bottom:
             3rem !important;
@@ -647,8 +724,13 @@ st.html(
 
         padding-right:
             2rem !important;
+
     }}
 
+
+    /* ======================================================
+       SIDEBAR
+       ====================================================== */
 
     section[data-testid="stSidebar"],
     [data-testid="stSidebarContent"],
@@ -656,20 +738,24 @@ st.html(
 
         background-color:
             {SIDEBAR} !important;
+
     }}
 
 
     section[data-testid="stSidebar"] {{
 
         border-right:
-            1px solid {BORDO} !important;
+            1px solid
+            {BORDO} !important;
+
     }}
 
 
     [data-testid="stSidebarUserContent"] {{
 
         padding-top:
-            1.15rem !important;
+            1rem !important;
+
     }}
 
 
@@ -682,6 +768,7 @@ st.html(
 
         color:
             {TESTO} !important;
+
     }}
 
 
@@ -689,13 +776,38 @@ st.html(
 
         border-color:
             {BORDO} !important;
+
     }}
 
+
+    /* ======================================================
+       LOGO SIDEBAR
+       ====================================================== */
+
+    [data-testid="stSidebar"]
+    [data-testid="stImage"] img {{
+
+        image-rendering:
+            auto;
+
+        backface-visibility:
+            hidden;
+
+        transform:
+            translateZ(0);
+
+    }}
+
+
+    /* ======================================================
+       RADIO CITTÀ
+       ====================================================== */
 
     [data-testid="stRadio"] > div {{
 
         gap:
             0.35rem !important;
+
     }}
 
 
@@ -705,7 +817,8 @@ st.html(
             {CARD_SECONDARIA};
 
         border:
-            1px solid {BORDO};
+            1px solid
+            {BORDO};
 
         border-radius:
             8px;
@@ -715,8 +828,24 @@ st.html(
 
         margin-bottom:
             3px;
+
+        transition:
+            all 0.15s ease;
+
     }}
 
+
+    [data-testid="stRadio"] label:hover {{
+
+        border-color:
+            {AZZURRO};
+
+    }}
+
+
+    /* ======================================================
+       TESTI GENERALI
+       ====================================================== */
 
     h1,
     h2,
@@ -727,6 +856,7 @@ st.html(
 
         color:
             {TESTO} !important;
+
     }}
 
 
@@ -736,6 +866,7 @@ st.html(
 
         color:
             {TESTO} !important;
+
     }}
 
 
@@ -745,6 +876,7 @@ st.html(
 
         color:
             {TESTO} !important;
+
     }}
 
 
@@ -752,42 +884,57 @@ st.html(
 
         color:
             {TESTO_SECONDARIO} !important;
+
     }}
 
 
+    /* ======================================================
+       KPI
+       ====================================================== */
+
     [data-testid="stMetric"] {{
 
-        background:
+        background-color:
             {CARD} !important;
 
         border:
-            1px solid {BORDO} !important;
+            1px solid
+            {BORDO} !important;
 
         border-top:
-            4px solid {AZZURRO} !important;
+            4px solid
+            {AZZURRO} !important;
 
         border-radius:
-            11px !important;
+            12px !important;
 
         padding:
-            1rem 1.15rem !important;
+            1rem
+            1.15rem !important;
 
         min-height:
-            118px;
+            120px;
 
         box-shadow:
-            0 3px 10px {OMBRA};
+            0 3px 10px
+            {OMBRA};
+
     }}
 
 
     [data-testid="stMetricValue"] {{
 
         color:
-            {BLU_NAVY if not dark_mode else AZZURRO_CHIARO}
+            {
+                BLU_NAVY
+                if not dark_mode
+                else AZZURRO_CHIARO
+            }
             !important;
 
         font-weight:
-            760 !important;
+            750 !important;
+
     }}
 
 
@@ -798,29 +945,37 @@ st.html(
             {LABEL} !important;
 
         font-weight:
-            650 !important;
+            600 !important;
+
     }}
 
+
+    /* ======================================================
+       EXPANDER
+       ====================================================== */
 
     [data-testid="stExpander"],
     [data-testid="stExpander"] details,
     [data-testid="stExpander"] summary {{
 
-        background:
+        background-color:
             {CARD} !important;
 
         color:
             {TESTO} !important;
+
     }}
 
 
     [data-testid="stExpander"] {{
 
         border:
-            1px solid {BORDO} !important;
+            1px solid
+            {BORDO} !important;
 
         border-radius:
             10px !important;
+
     }}
 
 
@@ -831,31 +986,37 @@ st.html(
 
         color:
             {TESTO} !important;
+
     }}
 
+
+    /* ======================================================
+       IMMAGINI
+       ====================================================== */
 
     [data-testid="stImage"] {{
 
         border-radius:
             10px !important;
+
     }}
 
 
-    .sezione-dashboard {{
+    /* ======================================================
+       LINK
+       ====================================================== */
 
-        margin-top:
-            32px;
+    a {{
 
-        margin-bottom:
-            14px;
+        color:
+            {AZZURRO} !important;
 
-        padding-bottom:
-            8px;
-
-        border-bottom:
-            2px solid {AZZURRO};
     }}
 
+
+    /* ======================================================
+       MOBILE
+       ====================================================== */
 
     @media (
         max-width: 800px
@@ -868,6 +1029,7 @@ st.html(
 
             padding-right:
                 1rem !important;
+
         }}
 
     }}
@@ -878,10 +1040,12 @@ st.html(
 
 
 # ============================================================
-# 12. INFORMAZIONI SIDEBAR
+# 12. INFO SIDEBAR
 # ============================================================
 
-st.sidebar.markdown("---")
+st.sidebar.markdown(
+    "---"
+)
 
 
 st.sidebar.caption(
@@ -1066,7 +1230,7 @@ n_celle_lisa = len(
 
 
 # ============================================================
-# 17. KPI SPECIFICI CITTÀ
+# 17. KPI SPECIFICI PER CITTÀ
 # ============================================================
 
 if citta == "Firenze":
@@ -1254,7 +1418,7 @@ def formato_decimale(
 
 
 # ============================================================
-# 19. HEADER
+# 19. HEADER AZIENDALE
 # ============================================================
 
 st.html(
@@ -1265,7 +1429,8 @@ st.html(
                 linear-gradient(
                     110deg,
                     {BLU_NAVY} 0%,
-                    {BLU} 58%,
+                    {BLU_PETROLIO} 34%,
+                    {BLU} 68%,
                     {AZZURRO} 100%
                 );
 
@@ -1276,13 +1441,15 @@ st.html(
                 27px 31px;
 
             margin-bottom:
-                25px;
+                26px;
 
             box-shadow:
-                0 4px 14px {OMBRA};
+                0 4px 14px
+                {OMBRA};
 
             border-bottom:
-                5px solid {ARANCIONE};
+                5px solid
+                {ARANCIONE};
         "
     >
 
@@ -1320,12 +1487,13 @@ st.html(
                     1.5;
 
                 opacity:
-                    0.96;
+                    0.97;
             "
         >
             Analisi della mixité funzionale urbana
             attraverso Points of Interest,
-            indici di diversità e autocorrelazione spaziale.
+            indici di diversità e
+            autocorrelazione spaziale.
         </div>
 
     </div>
@@ -1476,10 +1644,12 @@ st.html(
                 {CARD};
 
             border:
-                1px solid {BORDO};
+                1px solid
+                {BORDO};
 
             border-left:
-                5px solid {ARANCIONE};
+                5px solid
+                {ARANCIONE};
 
             border-radius:
                 10px;
@@ -1494,7 +1664,8 @@ st.html(
                 {TESTO};
 
             box-shadow:
-                0 2px 7px {OMBRA};
+                0 2px 7px
+                {OMBRA};
         "
     >
 
@@ -1507,11 +1678,16 @@ st.html(
                     8px;
 
                 color:
-                    {BLU if not dark_mode else AZZURRO_CHIARO};
+                    {
+                        BLU
+                        if not dark_mode
+                        else AZZURRO_CHIARO
+                    };
             "
         >
             Indicatore principale
         </div>
+
 
         <div
             style="
@@ -1521,9 +1697,11 @@ st.html(
         >
             L'indice di Shannon misura l'equilibrio
             nella distribuzione delle otto categorie
-            funzionali di POI. Valori più elevati
-            indicano una maggiore diversità e una
-            composizione funzionale più equilibrata.
+            funzionali di POI.
+
+            Valori più elevati indicano una maggiore
+            diversità funzionale e una composizione
+            maggiormente equilibrata.
         </div>
 
     </div>
@@ -1643,6 +1821,10 @@ tabella = (
 )
 
 
+# ------------------------------------------------------------
+# Formati italiani
+# ------------------------------------------------------------
+
 tabella["POI"] = (
     tabella[
         "n_poi"
@@ -1749,6 +1931,10 @@ tabella_finale = (
 )
 
 
+# ------------------------------------------------------------
+# Costruzione HTML
+# ------------------------------------------------------------
+
 righe_html = ""
 
 
@@ -1758,13 +1944,56 @@ for _, riga in (
 
     righe_html += f"""
     <tr>
-        <td>{riga["Quartiere"]}</td>
-        <td>{riga["POI"]}</td>
-        <td>{riga["Shannon"]}</td>
-        <td>{riga["Simpson dominance"]}</td>
-        <td>{riga["Ricchezza"]}</td>
-        <td>{riga["Residenti"]}</td>
-        <td>{riga["Densità ab./km²"]}</td>
+
+        <td style="
+            padding:12px;
+            border-bottom:1px solid {BORDO};
+        ">
+            {riga["Quartiere"]}
+        </td>
+
+        <td style="
+            padding:12px;
+            border-bottom:1px solid {BORDO};
+        ">
+            {riga["POI"]}
+        </td>
+
+        <td style="
+            padding:12px;
+            border-bottom:1px solid {BORDO};
+        ">
+            {riga["Shannon"]}
+        </td>
+
+        <td style="
+            padding:12px;
+            border-bottom:1px solid {BORDO};
+        ">
+            {riga["Simpson dominance"]}
+        </td>
+
+        <td style="
+            padding:12px;
+            border-bottom:1px solid {BORDO};
+        ">
+            {riga["Ricchezza"]}
+        </td>
+
+        <td style="
+            padding:12px;
+            border-bottom:1px solid {BORDO};
+        ">
+            {riga["Residenti"]}
+        </td>
+
+        <td style="
+            padding:12px;
+            border-bottom:1px solid {BORDO};
+        ">
+            {riga["Densità ab./km²"]}
+        </td>
+
     </tr>
     """
 
@@ -1780,7 +2009,8 @@ st.html(
                 {CARD};
 
             border:
-                1px solid {BORDO};
+                1px solid
+                {BORDO};
 
             border-radius:
                 10px;
@@ -1789,7 +2019,8 @@ st.html(
                 22px;
 
             box-shadow:
-                0 2px 8px {OMBRA};
+                0 2px 8px
+                {OMBRA};
         "
     >
 
@@ -1821,31 +2052,52 @@ st.html(
                     "
                 >
 
-                    <th style="padding:12px;text-align:left;">
+                    <th style="
+                        padding:12px;
+                        text-align:left;
+                    ">
                         Quartiere
                     </th>
 
-                    <th style="padding:12px;text-align:left;">
+                    <th style="
+                        padding:12px;
+                        text-align:left;
+                    ">
                         POI
                     </th>
 
-                    <th style="padding:12px;text-align:left;">
+                    <th style="
+                        padding:12px;
+                        text-align:left;
+                    ">
                         Shannon
                     </th>
 
-                    <th style="padding:12px;text-align:left;">
+                    <th style="
+                        padding:12px;
+                        text-align:left;
+                    ">
                         Simpson dominance
                     </th>
 
-                    <th style="padding:12px;text-align:left;">
+                    <th style="
+                        padding:12px;
+                        text-align:left;
+                    ">
                         Ricchezza
                     </th>
 
-                    <th style="padding:12px;text-align:left;">
+                    <th style="
+                        padding:12px;
+                        text-align:left;
+                    ">
                         Residenti
                     </th>
 
-                    <th style="padding:12px;text-align:left;">
+                    <th style="
+                        padding:12px;
+                        text-align:left;
+                    ">
                         Densità ab./km²
                     </th>
 
@@ -1853,8 +2105,11 @@ st.html(
 
             </thead>
 
+
             <tbody>
+
                 {righe_html}
+
             </tbody>
 
         </table>
@@ -1864,6 +2119,10 @@ st.html(
 )
 
 
+# ============================================================
+# 25. DIVERSITÀ E DENSITÀ
+# ============================================================
+
 st.image(
     str(
         cfg[
@@ -1871,15 +2130,16 @@ st.image(
         ]
     ),
     caption=(
-        "Relazione esplorativa tra diversità "
-        "funzionale e densità abitativa"
+        "Relazione esplorativa tra "
+        "diversità funzionale "
+        "e densità abitativa"
     ),
     use_container_width=True,
 )
 
 
 # ============================================================
-# 25. AUTOCORRELAZIONE SPAZIALE
+# 26. AUTOCORRELAZIONE SPAZIALE
 # ============================================================
 
 st.markdown(
@@ -1932,10 +2192,12 @@ st.html(
                 {CARD_SECONDARIA};
 
             border:
-                1px solid {BORDO};
+                1px solid
+                {BORDO};
 
             border-left:
-                5px solid {AZZURRO};
+                5px solid
+                {AZZURRO};
 
             border-radius:
                 10px;
@@ -1961,6 +2223,7 @@ st.html(
         mediante contiguità <strong>Queen</strong>,
         pesi standardizzati per riga e
         <strong>999 permutazioni</strong>.
+
         L'analisi locale LISA distingue i cluster
         <strong>HH, LL, HL e LH</strong>.
 
@@ -1970,13 +2233,17 @@ st.html(
 
 
 # ============================================================
-# 26. METODOLOGIA
+# 27. METODOLOGIA
 # ============================================================
 
 st.markdown(
     "## Metodologia"
 )
 
+
+# ------------------------------------------------------------
+# POI
+# ------------------------------------------------------------
 
 with st.expander(
     "Fonti e classificazione POI",
@@ -1991,8 +2258,9 @@ spaziale dei **Points of Interest (POI)**.
 
 **Fonte POI:** OpenStreetMap tramite snapshot Geofabrik.
 
-Il dataset finale comprende **{formato_intero(n_poi)} POI**
-classificati nelle otto categorie funzionali previste:
+Il dataset finale comprende
+**{formato_intero(n_poi)} POI**, classificati nelle otto
+categorie funzionali previste:
 
 - commercio
 - ristorazione
@@ -2010,6 +2278,10 @@ di Saragozza.
     )
 
 
+# ------------------------------------------------------------
+# GRIGLIA
+# ------------------------------------------------------------
+
 with st.expander(
     "Griglia e indicatori"
 ):
@@ -2024,16 +2296,19 @@ con celle di:
 - **1.000 m**
 
 La dimensione delle celle viene adattata alla densità
-osservata dei POI, evitando che l'impiego di una sola
-dimensione produca un confronto fortemente condizionato
-dalla diversa concentrazione delle attività tra aree
-centrali e periferiche.
+osservata dei POI.
+
+Questa impostazione evita che una dimensione unica
+produca un confronto fortemente condizionato dalla
+differente concentrazione delle attività tra le aree
+centrali e quelle periferiche.
 
 ### Indice di Shannon
 
 `H = - Σ pᵢ ln(pᵢ)`
 
 È l'indicatore principale della diversità funzionale.
+
 Valori più elevati indicano una distribuzione più
 equilibrata delle categorie.
 
@@ -2045,11 +2320,15 @@ Misura il livello di dominanza delle categorie.
 
 ### Ricchezza categoriale
 
-Numero di categorie funzionali presenti
+Numero delle categorie funzionali presenti
 nell'unità spaziale.
         """
     )
 
+
+# ------------------------------------------------------------
+# AUTOCORRELAZIONE
+# ------------------------------------------------------------
 
 with st.expander(
     "Autocorrelazione spaziale"
@@ -2060,7 +2339,7 @@ with st.expander(
 L'analisi viene effettuata sulle
 **{formato_intero(n_celle_moran)} celle con Shannon definito**.
 
-Configurazione:
+Configurazione utilizzata:
 
 - contiguità Queen
 - pesi standardizzati per riga
@@ -2069,11 +2348,19 @@ Configurazione:
 - Moran's I = **{formato_decimale(moran_i, 4)}**
 - p-value = **{formato_decimale(moran_p, 4)}**
 
-L'analisi LISA distingue i cluster locali
-**HH, LL, HL e LH**.
+L'analisi LISA distingue i cluster locali:
+
+- **HH**
+- **LL**
+- **HL**
+- **LH**
         """
     )
 
+
+# ------------------------------------------------------------
+# QUARTIERI
+# ------------------------------------------------------------
 
 with st.expander(
     "Scala dei quartieri"
@@ -2100,19 +2387,24 @@ Dei **{formato_intero(n_poi)} POI** complessivi:
 
         testo_quartieri += """
 
-Per l'assegnazione territoriale dei POI viene utilizzato
-il **representative point** delle geometrie OSM.
+### Assegnazione territoriale dei POI
+
+Per Firenze, per l'assegnazione territoriale dei POI
+alla scala dei quartieri viene utilizzato il
+**representative point** delle geometrie OSM.
+
 Questa procedura evita assegnazioni multiple dei POI
 rappresentati da geometrie lineari o poligonali.
 
 ### Armonizzazione cartografica
 
-Il confine comunale utilizzato nel progetto e le geometrie
-ufficiali dei quartieri derivano da fonti territoriali
-differenti e presentano piccoli disallineamenti geometrici.
+Il confine comunale utilizzato nel progetto e le
+geometrie ufficiali dei quartieri derivano da fonti
+territoriali differenti e presentano piccoli
+disallineamenti geometrici.
 
-Nella **sola visualizzazione della mappa**, le geometrie
-dei quartieri sono armonizzate al perimetro comunale:
+Nella **sola visualizzazione della mappa** le geometrie
+dei quartieri vengono armonizzate al perimetro comunale:
 
 - le porzioni esterne al Comune vengono ritagliate;
 - le porzioni interne non coperte vengono attribuite,
@@ -2120,8 +2412,8 @@ dei quartieri sono armonizzate al perimetro comunale:
   cui condividono la maggiore lunghezza di confine.
 
 Questa procedura **non modifica i file territoriali
-originali, l'assegnazione dei POI, la popolazione o gli
-indicatori statistici**.
+originali, l'assegnazione dei POI, la popolazione
+o gli indicatori statistici**.
         """
 
 
@@ -2129,6 +2421,10 @@ indicatori statistici**.
         testo_quartieri
     )
 
+
+# ------------------------------------------------------------
+# POPOLAZIONE
+# ------------------------------------------------------------
 
 with st.expander(
     "Popolazione e densità"
@@ -2150,11 +2446,16 @@ Totale riconciliato del Comune di {citta}:
 
 **{formato_intero(residenti_comune)} residenti**
 
-La densità abitativa è calcolata come
-**residenti per km²**.
+La densità abitativa è calcolata come:
+
+**residenti / km²**
         """
     )
 
+
+# ------------------------------------------------------------
+# SARAGOZZA
+# ------------------------------------------------------------
 
 with st.expander(
     "Riferimento a spatial_diversity"
@@ -2181,10 +2482,12 @@ agli usi immobiliari.
 
 
 # ============================================================
-# 27. FOOTER
+# 28. FOOTER
 # ============================================================
 
-st.markdown("---")
+st.markdown(
+    "---"
+)
 
 
 st.caption(
